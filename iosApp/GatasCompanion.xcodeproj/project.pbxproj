@@ -16,6 +16,16 @@
 		A10000000000000000000013 /* GatasPropellerLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* GatasPropellerLiveActivityAttributes.swift */; };
 		A10000000000000000000014 /* GatasPropellerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* GatasPropellerLiveActivity.swift */; };
 		A10000000000000000000015 /* LiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* LiveActivityExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		B20000000000000000000003 /* GatasWatchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = B20000000000000000000001 /* GatasWatchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B20000000000000000000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000002 /* Assets.xcassets */; };
+		B200000000000000000000C8 /* PhoneWatchSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000064 /* PhoneWatchSession.swift */; };
+		B200000000000000000000C9 /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000065 /* WatchProtocol.swift */; };
+		B2000000000000000000012D /* WatchProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000065 /* WatchProtocol.swift */; };
+		B2000000000000000000012E /* WatchSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000066 /* WatchSession.swift */; };
+		B2000000000000000000012F /* GatasWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000067 /* GatasWatchApp.swift */; };
+		B20000000000000000000130 /* WatchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000068 /* WatchViews.swift */; };
+		B20000000000000000000131 /* CompanionHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000069 /* CompanionHandoff.swift */; };
+		B20000000000000000000132 /* CompanionHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000069 /* CompanionHandoff.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,6 +35,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = A10000000000000000000031;
 			remoteInfo = LiveActivityExtension;
+		};
+		B20000000000000000000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7555FF73242A565900829871 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B2000000000000000000000A;
+			remoteInfo = GatasWatchApp;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -40,13 +57,24 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B20000000000000000000006 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B20000000000000000000003 /* GatasWatchApp.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
-		7555FF7B242A565900829871 /* GaTasCompanion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GaTasCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7555FF7B242A565900829871 /* GatasCompanion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GatasCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A10000000000000000000001 /* GatasPropellerLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatasPropellerLiveActivityAttributes.swift; sourceTree = "<group>"; };
@@ -55,10 +83,25 @@
 		A10000000000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A10000000000000000000006 /* LiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB3632DC29227652001CCB65 /* Config.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		B20000000000000000000001 /* GatasWatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GatasWatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B20000000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B20000000000000000000064 /* PhoneWatchSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneWatchSession.swift; sourceTree = "<group>"; };
+		B20000000000000000000065 /* WatchProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchProtocol.swift; sourceTree = "<group>"; };
+		B20000000000000000000066 /* WatchSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSession.swift; sourceTree = "<group>"; };
+		B20000000000000000000067 /* GatasWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatasWatchApp.swift; sourceTree = "<group>"; };
+		B20000000000000000000068 /* WatchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchViews.swift; sourceTree = "<group>"; };
+		B20000000000000000000069 /* CompanionHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionHandoff.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A10000000000000000000022 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B20000000000000000000007 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -93,8 +136,10 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
+				B20000000000000000000008 /* GatasWatchApp */,
+				B20000000000000000000009 /* WatchShared */,
 				AB1DB47929225F7C00F7AF9C /* Configuration */,
-				7555FF7D242A565900829871 /* iosApp */,
+				7555FF7D242A565900829871 /* GatasCompanion */,
 				A10000000000000000000005 /* LiveActivityExtension */,
 				7555FF7C242A565900829871 /* Products */,
 				42799AB246E5F90AF97AA0EF /* Frameworks */,
@@ -104,23 +149,26 @@
 		7555FF7C242A565900829871 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7555FF7B242A565900829871 /* GaTasCompanion.app */,
+				7555FF7B242A565900829871 /* GatasCompanion.app */,
+				B20000000000000000000001 /* GatasWatchApp.app */,
 				A10000000000000000000006 /* LiveActivityExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		7555FF7D242A565900829871 /* iosApp */ = {
+		7555FF7D242A565900829871 /* GatasCompanion */ = {
 			isa = PBXGroup;
 			children = (
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* ContentView.swift */,
+				B20000000000000000000064 /* PhoneWatchSession.swift */,
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				A10000000000000000000001 /* GatasPropellerLiveActivityAttributes.swift */,
 				A10000000000000000000002 /* GatasLiveActivityManager.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
+			name = GatasCompanion;
 			path = iosApp;
 			sourceTree = "<group>";
 		};
@@ -141,29 +189,51 @@
 			path = Configuration;
 			sourceTree = "<group>";
 		};
+		B20000000000000000000008 /* GatasWatchApp */ = {
+			isa = PBXGroup;
+			children = (
+				B20000000000000000000066 /* WatchSession.swift */,
+				B20000000000000000000067 /* GatasWatchApp.swift */,
+				B20000000000000000000068 /* WatchViews.swift */,
+				B20000000000000000000002 /* Assets.xcassets */,
+			);
+			path = GatasWatchApp;
+			sourceTree = "<group>";
+		};
+		B20000000000000000000009 /* WatchShared */ = {
+			isa = PBXGroup;
+			children = (
+				B20000000000000000000065 /* WatchProtocol.swift */,
+				B20000000000000000000069 /* CompanionHandoff.swift */,
+			);
+			path = WatchShared;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		7555FF7A242A565900829871 /* iosApp */ = {
+		7555FF7A242A565900829871 /* GatasCompanion */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "iosApp" */;
+			buildConfigurationList = 7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "GatasCompanion" */;
 			buildPhases = (
 				F36B1CEB2AD83DDC00CB74D5 /* Compile Kotlin Framework */,
 				7555FF77242A565900829871 /* Sources */,
 				B92378962B6B1156000C7307 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
 				A10000000000000000000024 /* Embed Foundation Extensions */,
+				B20000000000000000000006 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				A10000000000000000000032 /* PBXTargetDependency */,
+				B2000000000000000000000E /* PBXTargetDependency */,
 			);
-			name = iosApp;
+			name = GatasCompanion;
 			packageProductDependencies = (
 			);
-			productName = iosApp;
-			productReference = 7555FF7B242A565900829871 /* GaTasCompanion.app */;
+			productName = GatasCompanion;
+			productReference = 7555FF7B242A565900829871 /* GatasCompanion.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A10000000000000000000031 /* LiveActivityExtension */ = {
@@ -185,6 +255,23 @@
 			productReference = A10000000000000000000006 /* LiveActivityExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		B2000000000000000000000A /* GatasWatchApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B2000000000000000000000B /* Build configuration list for PBXNativeTarget "GatasWatchApp" */;
+			buildPhases = (
+				B2000000000000000000000C /* Sources */,
+				B20000000000000000000007 /* Frameworks */,
+				B2000000000000000000000D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GatasWatchApp;
+			productName = GatasWatchApp;
+			productReference = B20000000000000000000001 /* GatasWatchApp.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -204,7 +291,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 7555FF76242A565900829871 /* Build configuration list for PBXProject "iosApp" */;
+			buildConfigurationList = 7555FF76242A565900829871 /* Build configuration list for PBXProject "GatasCompanion" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -219,8 +306,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				7555FF7A242A565900829871 /* iosApp */,
+				7555FF7A242A565900829871 /* GatasCompanion */,
 				A10000000000000000000031 /* LiveActivityExtension */,
+				B2000000000000000000000A /* GatasWatchApp */,
 			);
 		};
 /* End PBXProject section */
@@ -239,6 +327,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B2000000000000000000000D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B20000000000000000000004 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,6 +368,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
+				B200000000000000000000C8 /* PhoneWatchSession.swift in Sources */,
+				B200000000000000000000C9 /* WatchProtocol.swift in Sources */,
+				B20000000000000000000131 /* CompanionHandoff.swift in Sources */,
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				A10000000000000000000011 /* GatasPropellerLiveActivityAttributes.swift in Sources */,
 				A10000000000000000000012 /* GatasLiveActivityManager.swift in Sources */,
@@ -287,6 +386,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B2000000000000000000000C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B2000000000000000000012D /* WatchProtocol.swift in Sources */,
+				B20000000000000000000132 /* CompanionHandoff.swift in Sources */,
+				B2000000000000000000012E /* WatchSession.swift in Sources */,
+				B2000000000000000000012F /* GatasWatchApp.swift in Sources */,
+				B20000000000000000000130 /* WatchViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -294,6 +405,11 @@
 			isa = PBXTargetDependency;
 			target = A10000000000000000000031 /* LiveActivityExtension */;
 			targetProxy = A10000000000000000000020 /* PBXContainerItemProxy */;
+		};
+		B2000000000000000000000E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B2000000000000000000000A /* GatasWatchApp */;
+			targetProxy = B20000000000000000000005 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -334,7 +450,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 8AF68KX5US;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -352,7 +467,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.3;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -399,7 +513,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 8AF68KX5US;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -411,7 +524,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -436,9 +548,7 @@
 					"$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
 				);
 				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "GaTas Companion";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -469,9 +579,7 @@
 					"$(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
 				);
 				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "GaTas Companion";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.navigation";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -499,7 +607,6 @@
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = LiveActivityExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "GATAS Live Activity";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -528,7 +635,6 @@
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = LiveActivityExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "GATAS Live Activity";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -546,10 +652,60 @@
 			};
 			name = Release;
 		};
+		B2000000000000000000000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AB3632DC29227652001CCB65 /* Config.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = GATAS;
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(BUNDLE_ID)";
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID).watchkitapp";
+				PRODUCT_NAME = GatasWatchApp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		B20000000000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AB3632DC29227652001CCB65 /* Config.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = GATAS;
+				INFOPLIST_KEY_WKApplication = YES;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(BUNDLE_ID)";
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(BUNDLE_ID).watchkitapp";
+				PRODUCT_NAME = GatasWatchApp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		7555FF76242A565900829871 /* Build configuration list for PBXProject "iosApp" */ = {
+		7555FF76242A565900829871 /* Build configuration list for PBXProject "GatasCompanion" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7555FFA3242A565B00829871 /* Debug */,
@@ -558,7 +714,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "iosApp" */ = {
+		7555FFA5242A565B00829871 /* Build configuration list for PBXNativeTarget "GatasCompanion" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7555FFA6242A565B00829871 /* Debug */,
@@ -572,6 +728,15 @@
 			buildConfigurations = (
 				A10000000000000000000041 /* Debug */,
 				A10000000000000000000042 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B2000000000000000000000B /* Build configuration list for PBXNativeTarget "GatasWatchApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B2000000000000000000000F /* Debug */,
+				B20000000000000000000010 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

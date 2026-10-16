@@ -1,77 +1,123 @@
 import ActivityKit
 import Foundation
-import SwiftUI
 import UIKit
 import ComposeApp
 import os
 
-/// Keeps the Live Activity synchronized with the in-process bridge state.
+/// Process-owned synchronizer, independent of the iPhone's visible views.
 ///
 /// A Live Activity is a status surface only. It does not grant background
 /// execution time and must never be used as a substitute for iOS Bluetooth
 /// restoration or ordinary application lifecycle handling.
-@available(iOS 16.2, *)
 @MainActor
-final class GatasLiveActivityManager: ObservableObject {
+final class GatasLiveActivityManager: NSObject {
+    static let shared = GatasLiveActivityManager()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "GATAS", category: "LiveActivity")
     private var activity: Activity<GatasPropellerLiveActivityAttributes>?
     private var loopTask: Task<Void, Never>?
+    private var syncTask: Task<Void, Never>?
+    private var syncRequested = false
+    private var startFailed = false
+
+    private override init() { super.init() }
+
+    private var hasActivity: Bool {
+        guard let activity else { return false }
+        // A stale activity is still visible and can become current again after
+        // an update. Creating a replacement here would produce duplicates.
+        return activity.activityState == .active || activity.activityState == .stale
+    }
+
+    private var nextAction: LiveActivitySyncAction {
+        LiveActivitySyncPolicy.action(
+            bridgeRunning: GatasLiveActivityBridge.shared.isBridgeRunning(),
+            hasActivity: hasActivity,
+            isForeground: UIApplication.shared.applicationState == .active,
+            activitiesEnabled: ActivityAuthorizationInfo().areActivitiesEnabled,
+            startFailed: startFailed
+        )
+    }
+
+    var presentationStatus: WatchLiveActivityStatus {
+        guard UIDevice.current.userInterfaceIdiom == .phone else { return .unavailable }
+        switch nextAction {
+        case .end: return .inactive
+        case .start: return .starting
+        case .update: return .active
+        case .waitForForeground: return .waitingForForeground
+        case .disabled: return .disabled
+        case .failed: return .failed
+        }
+    }
 
     func start() {
         guard loopTask == nil else { return }
         guard UIDevice.current.userInterfaceIdiom == .phone else { return }
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
-
-        // A SwiftUI root view can be recreated without terminating an existing
-        // Live Activity. Reuse the system-owned instance to avoid duplicate
-        // activities and to keep updates connected to the visible island.
+        // Background launches must recover an existing activity before a Watch
+        // command arrives, even if SwiftUI never creates the phone's root view.
         let existingActivities = Activity<GatasPropellerLiveActivityAttributes>.activities
-        activity = existingActivities.first { $0.activityState == .active }
+        activity = existingActivities.first { $0.activityState == .active || $0.activityState == .stale }
         endDuplicateActivities(existingActivities.filter { $0.id != activity?.id })
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(applicationDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification, object: nil
+        )
+        synchronize()
         loopTask = Task { [weak self] in
-            await self?.runLoop()
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { break }
+                self?.synchronize()
+            }
         }
     }
 
-    func stop() {
-        loopTask?.cancel()
-        loopTask = nil
-        Task { [weak self] in
-            await self?.endActivity()
-        }
+    @objc private func applicationDidBecomeActive() {
+        // A normal WatchConnectivity wakeup cannot start a new Live Activity.
+        // Catch up immediately when the person brings the app to the foreground,
+        // and permit one new attempt if an earlier foreground request failed.
+        startFailed = false
+        synchronize()
     }
 
-    private func runLoop() async {
-        while !Task.isCancelled {
-            await syncActivity()
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+    func synchronize() {
+        guard UIDevice.current.userInterfaceIdiom == .phone else { return }
+        syncRequested = true
+        guard syncTask == nil else { return }
+        // ActivityKit update/end calls suspend. Serialize all callers so a Watch
+        // stop during an update cannot race a foreground request or create a
+        // second activity. The next iteration always reads current bridge state.
+        syncTask = Task { [weak self] in
+            guard let self else { return }
+            defer { self.syncTask = nil }
+            while self.syncRequested {
+                self.syncRequested = false
+                await self.syncActivity()
+            }
         }
     }
 
     private func syncActivity() async {
         let bridge = GatasLiveActivityBridge.shared
-
-        guard bridge.isBridgeRunning() else {
+        switch nextAction {
+        case .end:
+            startFailed = false
             await endActivity()
-            return
-        }
-
-        if let activity, activity.activityState != .active {
-            logger.notice("Discarding a non-active Live Activity before requesting a replacement")
-            self.activity = nil
-        }
-
-        if activity == nil {
+        case .start:
             await startActivity(rotationDegrees: Int(bridge.rotationDegrees()))
-            return
-        }
-
-        if bridge.consumeRotationTick() {
-            await updateActivity(rotationDegrees: Int(bridge.rotationDegrees()))
+        case .update:
+            if bridge.consumeRotationTick() {
+                await updateActivity(rotationDegrees: Int(bridge.rotationDegrees()))
+            }
+        case .disabled:
+            startFailed = false
+        case .waitForForeground, .failed:
+            // Do not request every second and repeatedly log authorization
+            // errors. iOS grants no visibility privilege for a WCSession message.
+            break
         }
     }
 
-    @available(iOS 16.2, *)
     private func startActivity(rotationDegrees: Int) async {
         let contentState = GatasPropellerLiveActivityAttributes.ContentState(
             rotationDegrees: rotationDegrees,
@@ -87,13 +133,13 @@ final class GatasLiveActivityManager: ObservableObject {
             )
         } catch {
             activity = nil
+            startFailed = true
             logger.error("Unable to start Live Activity: \(error.localizedDescription, privacy: .public)")
         }
     }
 
-    @available(iOS 16.2, *)
     private func updateActivity(rotationDegrees: Int) async {
-        guard let activity, activity.activityState == .active else {
+        guard let activity, hasActivity else {
             logger.notice("Skipped Live Activity update because the activity is no longer active")
             self.activity = nil
             return
@@ -108,7 +154,6 @@ final class GatasLiveActivityManager: ObservableObject {
         await activity.update(content)
     }
 
-    @available(iOS 16.2, *)
     private func endActivity() async {
         guard let activity else { return }
         let contentState = GatasPropellerLiveActivityAttributes.ContentState(
@@ -139,20 +184,5 @@ final class GatasLiveActivityManager: ObservableObject {
                 logger.notice("Ended a duplicate or stale Live Activity")
             }
         }
-    }
-}
-
-@available(iOS 16.2, *)
-struct LiveActivityBootstrapView: View {
-    @StateObject private var manager = GatasLiveActivityManager()
-
-    var body: some View {
-        Color.clear
-            .task {
-                manager.start()
-            }
-            .onDisappear {
-                manager.stop()
-            }
     }
 }

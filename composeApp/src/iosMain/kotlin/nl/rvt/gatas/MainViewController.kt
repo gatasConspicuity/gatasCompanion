@@ -17,9 +17,13 @@ private val centralManagerConfiguration: Unit by lazy {
     }
 }
 
-fun MainViewController(): UIViewController {
+fun initializeCompanionRuntime() {
     initializeLogging()
     centralManagerConfiguration
+}
+
+fun MainViewController(): UIViewController {
+    initializeCompanionRuntime()
 
     return ComposeUIViewController {
         val permissionsController = PermissionsController()

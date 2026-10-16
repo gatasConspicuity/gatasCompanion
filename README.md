@@ -4,6 +4,10 @@ This project is licensed under Apache License 2.0 with the Commons Clause licens
 
 GATAS Companion is the mobile companion app for the GATAS conspicuity device. It is a Kotlin Multiplatform app that runs on Android and iOS.
 
+The iOS app requires iOS 18 or newer and includes an Apple Watch remote control
+for watchOS 10 or newer. The paired iPhone handles the GATAS connection and traffic
+forwarding. See [Apple Watch setup, architecture and acceptance checks](docs/WATCH.md).
+
 ## Reality check for cross-platform signing
 
 - Android: prebuild on one machine, then sign + deploy from macOS or Windows is supported.
@@ -24,6 +28,9 @@ cp iosApp/Configuration/Config.local.xcconfig.example iosApp/Configuration/Confi
 ```bash
 brew install ios-deploy
 ```
+
+5. Open `iosApp/GatasCompanion.xcodeproj` in Xcode. Select the **GatasCompanion**
+   scheme for the iPhone app or **GatasWatchApp** for the paired Watch app.
 
 ## Prebuild artifacts (commit to git if you want)
 

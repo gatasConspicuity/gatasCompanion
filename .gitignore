@@ -3,6 +3,8 @@
 .kotlin/
 build/
 **/build/
+.build/
+.swiftpm/
 
 # IDE
 .idea/
@@ -23,10 +25,9 @@ iosApp/Configuration/Config.local.xcconfig
 # iOS / Xcode
 iosApp/Pods/
 iosApp/Podfile.lock
-iosApp/iosApp.xcodeproj/xcuserdata/
+iosApp/*.xcodeproj/xcuserdata/
 iosApp/iosApp.xcworkspace/xcuserdata/
-iosApp/iosApp.xcodeproj/project.xcworkspace/
-iosApp/iosApp.xcodeproj/xcshareddata/
+iosApp/*.xcodeproj/project.xcworkspace/
 iosApp/iosApp.xcworkspace/
 
 

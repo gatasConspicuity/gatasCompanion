@@ -2,8 +2,8 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-XCODE_PROJECT="${XCODE_PROJECT:-$PROJECT_DIR/iosApp/iosApp.xcodeproj}"
-SCHEME="${SCHEME:-iosApp}"
+XCODE_PROJECT="${XCODE_PROJECT:-$PROJECT_DIR/iosApp/GatasCompanion.xcodeproj}"
+SCHEME="${SCHEME:-GatasCompanion}"
 CONFIGURATION="${CONFIGURATION:-Debug}"
 DERIVED_DATA="${DERIVED_DATA:-/tmp/OpenAceDerivedData}"
 SDK="${SDK:-iphoneos}"
@@ -22,8 +22,8 @@ Builds/signs the iOS app and optionally installs it on a connected iPhone.
 Options:
   --configuration Debug|Release   Build configuration (default: Debug)
   --derived-data PATH             DerivedData location (default: /tmp/OpenAceDerivedData)
-  --project PATH                  Xcode project path (default: ./iosApp/iosApp.xcodeproj)
-  --scheme NAME                   Xcode scheme (default: iosApp)
+  --project PATH                  Xcode project path (default: ./iosApp/GatasCompanion.xcodeproj)
+  --scheme NAME                   Xcode scheme (default: GatasCompanion)
   --device UDID                   Install to a specific device with ios-deploy
   --archive PATH                  Sign/export from a prebuilt .xcarchive
   --export-dir PATH               Export output directory when using --archive

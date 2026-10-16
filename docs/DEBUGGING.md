@@ -19,7 +19,7 @@ compiled and tested with the application, but its parsing, allocations, state,
 and output are inactive unless the binary is a debug build. Operational warning
 and error reporting remains active in releases.
 
-The application does not create diagnostic files. On iOS, collect the messages from Xcode's debug console while running the `iosApp` scheme with the `Debug` build configuration.
+The application does not create diagnostic files. On iOS, collect the messages from Xcode's debug console while running the `GatasCompanion` scheme with the `Debug` build configuration.
 
 ## End-to-end traffic path
 
@@ -109,6 +109,15 @@ BLE framing is bounded. Oversized COBS or NMEA frames are discarded, buffers are
 
 The Live Activity extension is embedded in the application bundle and uses the same version/build values as the main application. Existing activities are recovered through `Activity.activities`, stale duplicates are ended, and request, update, and end failures are logged in debug builds.
 
+The manager is owned by the application delegate, rather than a SwiftUI view,
+so a WatchConnectivity background launch also recovers existing activities.
+Ordinary background messages cannot request a new activity: requests wait for
+`UIApplication.didBecomeActiveNotification`. The Watch reports this separately
+from bridge health. A failed foreground request is logged once and can be retried
+on the next foreground activation or bridge session, instead of failing every
+second. ActivityKit operations from the timer, foreground activation and remote
+commands are serialized.
+
 The Dynamic Island icon is a self-contained SwiftUI vector with explicit dimensions and a visible foreground color. It does not depend on the main application's asset catalog or accent color. A Live Activity is a status surface only; it does not guarantee continuous background execution.
 
 ## Xcode messages investigated during stabilization
@@ -123,7 +132,7 @@ The Dynamic Island icon is a self-contained SwiftUI vector with explicit dimensi
 
 ## Reproducing a diagnostic session
 
-1. Select the `iosApp` scheme and the connected iPhone or iPad in Xcode.
+1. Select the `GatasCompanion` scheme and the connected iPhone or iPad in Xcode.
 2. Confirm `Product > Scheme > Edit Scheme > Run > Build Configuration` is `Debug`.
 3. Run with `Command-R`.
 4. Enable GDL90 and start the bridge.

@@ -8,6 +8,21 @@ package nl.rvt.gatas.companion.services
  * deterministic in unit tests.
  */
 object BridgeStatusReducer {
+    /** Settings can change from the Watch while no new packet is arriving. */
+    fun applyGdl90Setting(status: BridgeStatus, enabled: Boolean): BridgeStatus =
+        if (status.gdl90.enabled == enabled) status else status.copy(
+            gdl90 = if (enabled) initialGdl90(true) else status.gdl90.copy(
+                enabled = false, state = Gdl90State.Disabled,
+                lastEvent = "GDL90 forwarding disabled", lastError = null,
+            ),
+        )
+
+    /** A missing echo is an unknown result, not proof that GATAS rejected it. */
+    fun wifiChangeUnconfirmed(status: BridgeStatus, target: nl.rvantwisk.gatas.lib.models.WifiMode, message: String): BridgeStatus =
+        if (status.wifiModeChangeTarget != target) status else status.copy(
+            wifiModeChangeTarget = null, wifiModeStatusMessage = message,
+        )
+
     fun initialGdl90(enabled: Boolean): Gdl90BridgeStatus = Gdl90BridgeStatus(
         enabled = enabled,
         state = if (enabled) Gdl90State.WaitingForFrames else Gdl90State.Disabled,

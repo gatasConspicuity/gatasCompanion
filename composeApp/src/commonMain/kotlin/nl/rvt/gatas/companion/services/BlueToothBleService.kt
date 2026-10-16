@@ -97,6 +97,7 @@ class BlueToothBleService constructor(
     private var connectedPeripheral: Peripheral? = null
     private var reconnectJob: Job? = null
     private var aircraftChangeJob: Job? = null
+    private var wifiModeChangeJob: Job? = null
     private var stopJob: Job? = null
     private var lastGdl90TrafficMark: TimeMark? = null
     private var gdl90DiagnosticWindowStartedAt = TimeSource.Monotonic.markNow()
@@ -210,8 +211,10 @@ class BlueToothBleService constructor(
         log.i { "Ble Service stopped" }
         val reconnectToStop = reconnectJob
         val aircraftChangeToStop = aircraftChangeJob
+        val wifiChangeToStop = wifiModeChangeJob
         reconnectJob = null
         aircraftChangeJob = null
+        wifiModeChangeJob = null
 
         _status.update {
             it.copy(
@@ -230,6 +233,7 @@ class BlueToothBleService constructor(
 
         stopJob = scope.launch {
             aircraftChangeToStop?.cancelAndJoin()
+            wifiChangeToStop?.cancelAndJoin()
             reconnectToStop?.cancelAndJoin()
             connectedPeripheral?.disconnect()
             connectedPeripheral?.close()
@@ -240,10 +244,13 @@ class BlueToothBleService constructor(
     }
 
     fun requestAircraftChange(icaoAddress: Long) {
-        scope.launch {
-            aircraftChangeJob?.cancelAndJoin()
-
-            aircraftChangeJob = launch {
+        // Own the job before returning to Main, so a subsequent stop also
+        // cancels commands which have not begun their Bluetooth write yet.
+        val previous = aircraftChangeJob
+        aircraftChangeJob = scope.launch {
+            previous?.cancelAndJoin()
+            if (!_status.value.running) return@launch
+            try {
                 val initialPeripheral = connectedPeripheral
                 if (initialPeripheral == null) {
                     _status.update {
@@ -301,46 +308,52 @@ class BlueToothBleService constructor(
                         )
                     }
                 }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _status.update { it.copy(aircraftChangeTargetIcaoAddress = null,
+                    lastError = error.message ?: "Bluetooth write failed",
+                    lastEvent = "Aircraft change could not be confirmed") }
             }
         }
     }
 
     fun requestWifiModeChange(mode: WifiMode) {
-        scope.launch {
+        // Own the job before returning to Main, so a subsequent stop also
+        // cancels commands which have not begun their Bluetooth write yet.
+        val previous = wifiModeChangeJob
+        wifiModeChangeJob = scope.launch {
+            previous?.cancelAndJoin()
+            if (!_status.value.running) return@launch
             val peripheral = connectedPeripheral
             if (peripheral == null) {
-                _status.update {
-                    it.copy(
-                        wifiModeChangeTarget = null,
-                        wifiModeStatusMessage = "Bluetooth not connected. Cannot change Wi-Fi mode.",
-                        lastError = "Bluetooth not connected",
-                        lastEvent = "Cannot change Wi-Fi mode while disconnected",
-                    )
-                }
+                _status.update { it.copy(wifiModeChangeTarget = null,
+                    wifiModeStatusMessage = "Bluetooth not connected. Cannot change Wi-Fi mode.") }
                 return@launch
             }
-
-            val currentWifiMode = _status.value.ownshipConfiguration?.wifiMode
-            if (currentWifiMode == mode) {
-                _status.update {
-                    it.copy(
-                        wifiModeChangeTarget = null,
-                        wifiModeStatusMessage = "GATAS is already using ${mode.displayName()} mode.",
-                        lastError = null,
-                        lastEvent = "Wi-Fi mode already ${mode.displayName()}",
-                    )
-                }
+            if (_status.value.ownshipConfiguration?.wifiMode == mode) {
+                _status.update { it.copy(wifiModeChangeTarget = null,
+                    wifiModeStatusMessage = "GATAS is already using ${mode.displayName()} mode.") }
                 return@launch
             }
-
-            sendWifiModeChangeCommand(peripheral, mode)
-            _status.update {
-                it.copy(
-                    wifiModeChangeTarget = mode,
-                    wifiModeStatusMessage = "Request sent. Waiting for GATAS to report ${mode.displayName()} mode.",
-                    lastError = null,
-                    lastEvent = "Requested Wi-Fi ${mode.displayName()} mode",
-                )
+            // Publish pending before the write: a fast configuration echo
+            // must not be overwritten with a new pending flag afterwards.
+            _status.update { it.copy(wifiModeChangeTarget = mode, lastError = null,
+                wifiModeStatusMessage = "Request sent. Waiting for GATAS to report ${mode.displayName()} mode.") }
+            try {
+                sendWifiModeChangeCommand(peripheral, mode)
+                val confirmed = withTimeoutOrNull(15_000) {
+                    status.first { it.ownshipConfiguration?.wifiMode == mode }
+                }
+                if (confirmed == null) {
+                    _status.update { BridgeStatusReducer.wifiChangeUnconfirmed(it, mode,
+                        "GATAS has not confirmed the Wi-Fi change. Check its current mode before trying again.") }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                _status.update { BridgeStatusReducer.wifiChangeUnconfirmed(it, mode,
+                    "Wi-Fi command failed: ${error.message ?: "Bluetooth write failed"}") }
             }
         }
     }
@@ -883,10 +896,9 @@ class BlueToothBleService constructor(
             )
         }
 
-        if (_status.value.aircraftChangeTargetIcaoAddress == null) {
-            aircraftChangeJob?.cancel()
-            aircraftChangeJob = null
-        }
+        // The owning change job observes the echoed address itself. Cancelling
+        // the current job from this notification could cancel a newer request
+        // which has been scheduled but has not set its pending target yet.
     }
 
     private suspend fun sendResponse(

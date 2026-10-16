@@ -44,6 +44,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,7 +72,6 @@ import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.CogSolid
 import nl.rvt.gatas.PlatformKeepScreenOnEffect
 import nl.rvantwisk.gatas.lib.models.WifiMode
-import nl.rvt.gatas.companion.background.BridgeBackgroundComponent
 import nl.rvt.gatas.companion.services.BridgeStatus
 
 @Composable
@@ -85,40 +85,14 @@ fun ConnectScreen(
     var showGatasSettingsDialog by remember { mutableStateOf(false) }
     var gatasBrowserHexCode by remember { mutableStateOf<String?>(null) }
     val ownshipConfiguration = bridgeStatus.ownshipConfiguration
-    var aircraftPickerEntries by remember(ownshipConfiguration?.icaoAddressList) {
-        mutableStateOf<List<AircraftPickerEntry>>(emptyList())
-    }
-    var aircraftPickerLoading by remember(ownshipConfiguration?.icaoAddressList) {
-        mutableStateOf(false)
-    }
-    var aircraftPickerError by remember(ownshipConfiguration?.icaoAddressList) {
-        mutableStateOf<String?>(null)
-    }
+    val companionState by CompanionController.state.collectAsState()
+    val aircraftPickerEntries = companionState.aircraft
+    val aircraftPickerLoading = companionState.aircraftLoading
+    val aircraftPickerError = companionState.aircraftError
 
     PlatformKeepScreenOnEffect()
-
-    LaunchedEffect(ownshipConfiguration?.icaoAddressList) {
-        aircraftPickerEntries = if (ownshipConfiguration == null) {
-            emptyList()
-        } else {
-            AircraftLookupService.loadCachedAircraftPickerEntries(ownshipConfiguration.icaoAddressList)
-        }
-    }
-
-    LaunchedEffect(showAircraftDialog, ownshipConfiguration?.icaoAddressList) {
-        if (!showAircraftDialog || ownshipConfiguration == null) {
-            return@LaunchedEffect
-        }
-
-        aircraftPickerLoading = true
-        aircraftPickerError = null
-        aircraftPickerEntries = runCatching {
-            AircraftLookupService.loadAircraftPickerEntries(ownshipConfiguration.icaoAddressList)
-        }.getOrElse { error ->
-            aircraftPickerError = error.message ?: "Unable to load aircraft list"
-            emptyList()
-        }
-        aircraftPickerLoading = false
+    LaunchedEffect(showAircraftDialog) {
+        if (showAircraftDialog) CompanionController.refreshAircraft()
     }
 
     Column(
@@ -213,7 +187,7 @@ fun ConnectScreen(
             loadError = aircraftPickerError,
             selectedIcaoAddress = ownshipConfiguration?.icaoAddress,
             pendingIcaoAddress = bridgeStatus.aircraftChangeTargetIcaoAddress,
-            onSelectAircraft = BridgeBackgroundComponent::requestAircraftChange,
+            onSelectAircraft = CompanionController::changeAircraft,
             onDismiss = { showAircraftDialog = false },
         )
     }
@@ -221,7 +195,7 @@ fun ConnectScreen(
     if (showGatasSettingsDialog) {
         GatasSettingsDialog(
             bridgeStatus = bridgeStatus,
-            onRequestWifiModeChange = BridgeBackgroundComponent::requestWifiModeChange,
+            onRequestWifiModeChange = CompanionController::changeWifiMode,
             onDismiss = { showGatasSettingsDialog = false },
         )
     }
