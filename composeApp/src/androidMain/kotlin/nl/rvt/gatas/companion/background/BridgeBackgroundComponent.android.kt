@@ -26,4 +26,8 @@ actual object BridgeBackgroundComponent {
     }
 
     actual fun requestDeviceAction(command: DeviceActionCommand): Boolean = GatasBridgeForegroundService.requestDeviceAction(command)
+
+    actual fun requestPhonePressureChange(deviceId: String, enabled: Boolean) {
+        GatasBridgeForegroundService.requestPhonePressureChange(appContext, deviceId, enabled)
+    }
 }

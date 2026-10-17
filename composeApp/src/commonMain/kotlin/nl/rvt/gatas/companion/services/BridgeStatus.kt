@@ -2,6 +2,7 @@ package nl.rvt.gatas.companion.services
 
 import nl.rvantwisk.gatas.lib.models.OwnshipAircraftConfiguration
 import nl.rvantwisk.gatas.lib.models.WifiMode
+import nl.rvt.gatas.companion.pressure.PhonePressureStatus
 
 data class BridgeStatus(
     val deviceControl: DeviceControlState = DeviceControlState(),
@@ -29,6 +30,7 @@ data class BridgeStatus(
     val bleNmeaActivityTick: Long = 0,
     val bleCobsActivityTick: Long = 0,
     val gdl90: Gdl90BridgeStatus = Gdl90BridgeStatus(),
+    val phonePressure: PhonePressureStatus = PhonePressureStatus(),
     val ownshipConfiguration: OwnshipAircraftConfiguration? = null,
     val aircraftChangeTargetIcaoAddress: Long? = null,
     val wifiModeChangeTarget: WifiMode? = null,

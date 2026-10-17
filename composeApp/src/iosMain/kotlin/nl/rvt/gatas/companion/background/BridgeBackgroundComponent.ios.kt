@@ -27,4 +27,8 @@ actual object BridgeBackgroundComponent {
     }
 
     actual fun requestDeviceAction(command: DeviceActionCommand): Boolean = controller.requestDeviceAction(command)
+
+    actual fun requestPhonePressureChange(deviceId: String, enabled: Boolean) {
+        controller.requestPhonePressureChange(deviceId, enabled)
+    }
 }

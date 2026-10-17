@@ -1,8 +1,10 @@
 package nl.rvt.gatas.companion.services
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
@@ -10,6 +12,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import nl.rvantwisk.gatas.lib.extensions.CobsByteArray
+import nl.rvantwisk.gatas.lib.extensions.serializeOwnshipPressureV1
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -72,6 +75,88 @@ class DeviceActionsTest {
             runCurrent()
             assertEquals("save-from-phone", client.state.value.operation?.id)
             assertEquals("completed", client.state.value.recentResults.single { it.id == "save-1" }.phase)
+        } finally { Dispatchers.resetMain() }
+    }
+
+    @Test fun saveSharesWholePacketWritesWithRelayAndPhonePressure() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val writer = BlePacketWriter()
+            val sent = mutableListOf<ByteArray>()
+            val chunks = mutableListOf<ByteArray>()
+            val client = DeviceActionClient(backgroundScope)
+            val session = Any()
+            client.connected(session) { packet ->
+                sent += packet
+                writer.write(packet, 2, { true }) { chunks += it }
+            }
+            advanceTimeBy(250); runCurrent()
+            client.receive(session, response(sent.last(), 0)); runCurrent()
+            chunks.clear()
+
+            val resume = CompletableDeferred<Unit>()
+            val relayPacket = byteArrayOf(3, 8, 42, 0)
+            val relay = launch {
+                writer.write(relayPacket, 2, { true }) { chunk ->
+                    chunks += chunk
+                    if (chunks.size == 1) resume.await()
+                }
+            }
+            runCurrent()
+            val pressurePacket = serializeOwnshipPressureV1(1000f)
+            val pressure = launch { writer.write(pressurePacket, 2, { true }) { chunks += it } }
+            assertTrue(client.request(DeviceActionCommand("shared-save", DeviceAction.Save, "a", boot)))
+            runCurrent()
+            assertEquals(1, chunks.size)
+            val prepare = sent.last()
+            resume.complete(Unit)
+            relay.join(); pressure.join(); runCurrent()
+            client.receive(session, response(prepare, 1)); runCurrent()
+            val execute = sent.last()
+            assertEquals(1, raw(execute).getBuffer()[2].toInt())
+            client.receive(session, response(execute, 0, dirty = false)); runCurrent()
+            assertEquals("completed", client.state.value.operation?.phase)
+            assertContentEquals(relayPacket + pressurePacket + prepare + execute,
+                chunks.flatMap { it.asList() }.toByteArray())
+        } finally { Dispatchers.resetMain() }
+    }
+
+    @Test fun timedOutDeviceActionCannotLeaveThePacketQueueLater() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val writer = BlePacketWriter()
+            val sent = mutableListOf<ByteArray>()
+            val chunks = mutableListOf<ByteArray>()
+            val client = DeviceActionClient(backgroundScope)
+            val session = Any()
+            client.connected(session) { packet ->
+                sent += packet
+                writer.write(packet, 2, { true }) { chunks += it }
+            }
+            advanceTimeBy(250); runCurrent()
+            client.receive(session, response(sent.last(), 0)); runCurrent()
+            chunks.clear()
+            val resume = CompletableDeferred<Unit>()
+            val relay = launch { writer.write(byteArrayOf(3, 8, 42, 0), 2, { true }) { chunk ->
+                chunks += chunk
+                if (chunks.size == 1) resume.await()
+            } }
+            runCurrent()
+            assertTrue(client.request(DeviceActionCommand("queued-save", DeviceAction.Save, "a", boot)))
+            runCurrent()
+            val queuedPrepare = sent.last()
+            advanceTimeBy(5_000); runCurrent()
+            assertEquals("unknown", client.state.value.operation?.phase)
+            resume.complete(Unit)
+            relay.join(); runCurrent()
+            client.receive(session, response(queuedPrepare, 1)); runCurrent()
+            val frames = BleFrameAssembler(BleFrameProtocol.Cobs)
+                .accept(chunks.flatMap { it.asList() }.toByteArray()).frames
+            assertFalse(frames.any { frame ->
+                val data = raw(frame).getBuffer()
+                data[0].toInt() == DeviceActionCodec.REQUEST_TYPE && data[1].toInt() == DeviceAction.Save.code
+            })
+            assertEquals("unknown", client.state.value.operation?.phase)
         } finally { Dispatchers.resetMain() }
     }
 

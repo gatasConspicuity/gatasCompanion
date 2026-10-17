@@ -71,4 +71,8 @@ class BridgeBackgroundController(
 
     fun requestDeviceAction(command: DeviceActionCommand): Boolean =
         activeService?.requestDeviceAction(command) == true
+
+    fun requestPhonePressureChange(deviceId: String, enabled: Boolean) {
+        if (currentDevice?.identifier == deviceId) activeService?.requestPhonePressureChange(deviceId, enabled)
+    }
 }
