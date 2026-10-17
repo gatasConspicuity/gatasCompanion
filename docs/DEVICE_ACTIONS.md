@@ -1,7 +1,9 @@
 # GATAS device actions
 
-The phone and Android app offer **Save configuration**, **Restart GATAS** and
-**Enter firmware update mode** on the connection page. Watch Settings offers Save
+The phone and Android app offer a **Device actions** button on the connection
+page. It opens a selection menu for **Save configuration**, **Restart GATAS** and
+**Enter firmware update mode**. Progress and results remain visible on the
+connection page after closing the menu. Watch Settings offers Save
 and Restart through its paired iPhone. Firmware mode commands are explicitly
 rejected by the Watch command policy, including forged requests.
 
@@ -115,9 +117,9 @@ Watch protocol version remains 1. Optional `deviceControl` fields contain
 capabilities, boot ID, dirty state and a correlated operation (ID, action, phase,
 message). Commands `saveConfiguration` and `restartGatas` carry `expectedDeviceId`
 and `expectedBootId`; the iPhone validates both again against the live service.
-Old snapshots decode and disable the unavailable actions. An open confirmation
-keeps the device/boot that the person saw, so it cannot silently target another
-device after a selection change.
+Old snapshots decode and disable the unavailable actions. Open action menus and
+confirmations keep the device/boot that the person saw, so they cannot silently
+target another device after a selection change.
 
 The last 16 terminal results remain in the process-local `recentResults` field.
 This carries confirmations through 1 Hz snapshot coalescing even when the phone

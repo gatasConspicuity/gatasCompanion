@@ -163,7 +163,7 @@ fun ConnectScreen(
             Gdl90BridgeCard(status = bridgeStatus)
         }
 
-        DeviceActionsCard(bridgeStatus, companionState.activeDevice?.identifier)
+        DeviceActionsButton(bridgeStatus, companionState.activeDevice?.identifier)
 
         Button(
             onClick = {
