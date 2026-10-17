@@ -14,6 +14,8 @@ enum class MessageType(val value: Int) {
     AIRCRAFT_POSITION_TYPE_V2(8),
     AIRCRAFT_POSITION_TYPE_V3(9),
     AIRCRAFT_POSITION_REQUEST_V2(10),
+    DEVICE_ACTION_REQUEST_V1(12),
+    DEVICE_ACTION_RESPONSE_V1(13),
 }
 
 // Variables name in REDIS store

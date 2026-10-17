@@ -27,6 +27,7 @@ import nl.rvt.gatas.companion.GaTasDevice
 import nl.rvt.gatas.MainActivity
 import nl.rvt.gatas.companion.services.BlueToothBleService
 import nl.rvt.gatas.companion.services.BridgeStatus
+import nl.rvt.gatas.companion.services.DeviceActionCommand
 import nl.rvt.gatas.companion.services.GatasUdpRelayService
 import nl.rvantwisk.gatas.lib.models.WifiMode
 
@@ -90,7 +91,7 @@ class GatasBridgeForegroundService : Service() {
     }
 
     private fun startBridge(device: GaTasDevice) {
-        if (currentDevice == device && bridgeService != null) {
+        if (currentDevice == device && bridgeService?.status?.value?.running == true) {
             return
         }
 
@@ -101,11 +102,15 @@ class GatasBridgeForegroundService : Service() {
         val relayService = GatasUdpRelayService()
         val service = BlueToothBleService(device, relayService)
         bridgeService = service
+        // Unlike START_REDELIVER_INTENT, this live-only sink cannot replay a
+        // reset or flash write after Android recreates the foreground service.
+        deviceActionSink = service::requestDeviceAction
 
         statusJob = serviceScope.launch {
             service.status.collect { bridgeStatus ->
                 _status.value = bridgeStatus
                 updateNotification(bridgeStatus)
+                if (!bridgeStatus.running && bridgeStatus.deviceControl.operation?.phase == "requested") stopSelf()
             }
         }
 
@@ -126,9 +131,10 @@ class GatasBridgeForegroundService : Service() {
 
         bridgeService?.stop()
         bridgeService = null
+        deviceActionSink = null
         currentDevice = null
         _activeDevice.value = null
-        _status.value = BridgeStatus()
+        _status.value = BridgeStatus(deviceControl = _status.value.deviceControl)
         if (updateNotification) {
             updateNotification(
                 BridgeStatus(
@@ -198,6 +204,9 @@ class GatasBridgeForegroundService : Service() {
     }
 
     companion object {
+        private var deviceActionSink: ((DeviceActionCommand) -> Boolean)? = null
+
+        fun requestDeviceAction(command: DeviceActionCommand): Boolean = deviceActionSink?.invoke(command) == true
         private const val ACTION_START = "nl.rvt.gatas.companion.background.action.START"
         private const val ACTION_STOP = "nl.rvt.gatas.companion.background.action.STOP"
         private const val ACTION_CHANGE_ICAO = "nl.rvt.gatas.companion.background.action.CHANGE_ICAO"

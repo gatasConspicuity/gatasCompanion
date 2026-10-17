@@ -21,7 +21,7 @@ final class WatchSession: NSObject, ObservableObject, WCSessionDelegate {
     private let cacheKey = "watch.lastSnapshot.v1"
 
     var canControl: Bool {
-        WatchFreshness.canControl(receivedLiveAt: receivedLiveAt) && !sending && awaitingConfirmation == nil
+        WatchFreshness.canControl(receivedLiveAt: receivedLiveAt) && !sending && awaitingConfirmation == nil && snapshot?.deviceControl?.operation?.busy != true
     }
     // A pending aircraft/Wi-Fi confirmation must not prevent stopping a bridge.
     var canStop: Bool { WatchFreshness.canControl(receivedLiveAt: receivedLiveAt) && !sending }
@@ -79,7 +79,8 @@ final class WatchSession: NSObject, ObservableObject, WCSessionDelegate {
         // retargeting its confirmation to the newest incoming snapshot.
         let command = WatchCommand(action: action, deviceId: device?.id,
                                    expectedDeviceId: state.activeDevice?.id,
-                                   icaoAddress: aircraft?.id, mode: mode, enabled: enabled)
+                                   icaoAddress: aircraft?.id, mode: mode, enabled: enabled,
+                                   expectedBootId: state.deviceControl?.bootId)
         do {
             let encoded = try command.encoded()
             let token = UUID()
@@ -102,7 +103,7 @@ final class WatchSession: NSObject, ObservableObject, WCSessionDelegate {
                             self.awaitingConfirmation = nil
                             self.confirmationTask?.cancel()
                         }
-                        if reply.status == "accepted" && ["setAircraft", "setWifi"].contains(action) {
+                        if reply.status == "accepted" && ["setAircraft", "setWifi", "saveConfiguration", "restartGatas"].contains(action) {
                             self.awaitingConfirmation = command
                             self.waitForConfirmationTimeout()
                         }
@@ -135,7 +136,8 @@ final class WatchSession: NSObject, ObservableObject, WCSessionDelegate {
     private func waitForConfirmationTimeout() {
         confirmationTask?.cancel()
         confirmationTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(45))
+            let timeout = self?.awaitingConfirmation?.action == "restartGatas" ? 75 : 45
+            try? await Task.sleep(for: .seconds(timeout))
             guard !Task.isCancelled, let self, self.awaitingConfirmation != nil else { return }
             self.awaitingConfirmation = nil
             self.show("GATAS has not confirmed the change. Refresh to check its current state.", error: true)
@@ -157,7 +159,9 @@ final class WatchSession: NSObject, ObservableObject, WCSessionDelegate {
             UserDefaults.standard.set(encoded, forKey: cacheKey)
             if live { receivedLiveAt = Date() }
             if let command = awaitingConfirmation {
-                if incoming.activeDevice?.id != command.expectedDeviceId {
+                if let operation = incoming.deviceControl?.result(for: command.id) {
+                    finishConfirmation(operation.message, success: operation.phase == "completed")
+                } else if incoming.activeDevice?.id != command.expectedDeviceId {
                     finishConfirmation("The active device changed before confirmation.", success: false)
                 } else if incoming.bleConnected &&
                     ((command.action == "setAircraft" && incoming.selectedIcaoAddress == command.icaoAddress) ||

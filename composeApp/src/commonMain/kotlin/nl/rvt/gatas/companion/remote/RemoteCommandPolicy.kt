@@ -2,6 +2,7 @@ package nl.rvt.gatas.companion.remote
 
 import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.CompanionState
+import nl.rvt.gatas.companion.services.DeviceAction
 
 /** Validate against the current phone state, never against a Watch's cache.
  * In particular, a command composed for one device must not affect another
@@ -15,9 +16,17 @@ object RemoteCommandPolicy {
                 require(command.expectedDeviceId == activeId) { "Active device changed. Refresh and try again." }
                 require(state.devices.any { it.identifier == command.deviceId }) { "Device is no longer saved" }
             }
-            "stop", "setAircraft", "setWifi" -> {
+            "stop", "setAircraft", "setWifi", "saveConfiguration", "restartGatas" -> {
                 require(activeId != null && command.expectedDeviceId == activeId) { "Active device changed. Refresh and try again." }
                 if (command.action != "stop") require(state.bridge.bleConnected) { "Bluetooth is not connected" }
+                if (command.action != "stop") require(state.bridge.deviceControl.operation?.busy != true) { "A GATAS device action is in progress" }
+                if (command.action in listOf("saveConfiguration", "restartGatas")) {
+                    val action = if (command.action == "saveConfiguration") DeviceAction.Save else DeviceAction.Restart
+                    require(state.bridge.deviceControl.supports(action)) { "This action requires updated GATAS firmware" }
+                    require(command.expectedBootId != null && command.expectedBootId == state.bridge.deviceControl.bootId) {
+                        "GATAS restarted. Refresh before trying again."
+                    }
+                }
                 if (command.action == "setAircraft") {
                     require(command.icaoAddress != null && state.bridge.ownshipConfiguration?.icaoAddressList?.contains(command.icaoAddress) == true) {
                         "Aircraft is no longer available"
@@ -37,6 +46,7 @@ object RemoteCommandPolicy {
                 require(command.deviceId != activeId) { "Stop the bridge before removing this device" }
             }
             "startScan", "stopScan", "refreshAircraft" -> Unit
+            "usbBoot", "enterFirmwareUpdateMode" -> error("Firmware update mode is only available in the Companion app")
             else -> error("Unsupported command")
         }
     }

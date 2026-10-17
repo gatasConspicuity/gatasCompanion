@@ -4,6 +4,7 @@ import nl.rvantwisk.gatas.lib.models.OwnshipAircraftConfiguration
 import nl.rvantwisk.gatas.lib.models.WifiMode
 
 data class BridgeStatus(
+    val deviceControl: DeviceControlState = DeviceControlState(),
     val running: Boolean = false,
     val connecting: Boolean = false,
     val bleConnected: Boolean = false,

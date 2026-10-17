@@ -14,6 +14,7 @@ import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.GaTasDevice
 import nl.rvt.gatas.companion.services.BlueToothBleService
 import nl.rvt.gatas.companion.services.BridgeStatus
+import nl.rvt.gatas.companion.services.DeviceActionCommand
 
 class BridgeBackgroundController(
     private val createBridgeService: (GaTasDevice) -> BlueToothBleService = ::BlueToothBleService,
@@ -29,7 +30,7 @@ class BridgeBackgroundController(
     private var statusJob: Job? = null
 
     fun start(device: GaTasDevice) {
-        if (currentDevice == device && activeService != null) {
+        if (currentDevice == device && activeService?.status?.value?.running == true) {
             return
         }
 
@@ -67,4 +68,7 @@ class BridgeBackgroundController(
     fun requestWifiModeChange(mode: WifiMode) {
         activeService?.requestWifiModeChange(mode)
     }
+
+    fun requestDeviceAction(command: DeviceActionCommand): Boolean =
+        activeService?.requestDeviceAction(command) == true
 }

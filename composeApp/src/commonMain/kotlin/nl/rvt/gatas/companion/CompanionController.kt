@@ -22,6 +22,11 @@ import nl.rvt.gatas.companion.remote.WatchSnapshot
 import nl.rvt.gatas.companion.remote.remoteJson
 import nl.rvt.gatas.companion.services.BridgeStatus
 import nl.rvt.gatas.companion.services.BridgeStatusReducer
+import nl.rvt.gatas.companion.services.DeviceAction
+import nl.rvt.gatas.companion.services.DeviceActionCommand
+import nl.rvt.gatas.companion.services.DeviceUpdatePolicy
+import kotlin.uuid.Uuid
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -106,6 +111,21 @@ object CompanionController {
 
     fun changeAircraft(address: Long) = BridgeBackgroundComponent.requestAircraftChange(address)
     fun changeWifiMode(mode: WifiMode) = BridgeBackgroundComponent.requestWifiModeChange(mode)
+
+    @OptIn(ExperimentalUuidApi::class)
+    fun requestDeviceAction(action: DeviceAction, deviceId: String?, bootId: String?,
+                            policy: DeviceUpdatePolicy = DeviceUpdatePolicy.RequireSaved,
+                            id: String = Uuid.random().toString()): Boolean {
+        val bridge = BridgeBackgroundComponent.status.value
+        val active = BridgeBackgroundComponent.activeDevice.value?.identifier
+        val valid = deviceId != null && deviceId == active && bootId != null &&
+            bridge.bleConnected && bridge.deviceControl.bootId == bootId &&
+            bridge.deviceControl.supports(action) && bridge.deviceControl.operation?.busy != true
+        val accepted = valid && BridgeBackgroundComponent.requestDeviceAction(
+            DeviceActionCommand(id, action, requireNotNull(deviceId), requireNotNull(bootId), policy))
+        if (!accepted) mutableState.value = state.value.copy(actionError = "GATAS connection changed or is busy. Refresh before trying again.")
+        return accepted
+    }
     fun refreshAircraft() = loadAircraft(state.value.bridge.ownshipConfiguration?.icaoAddressList.orEmpty())
 
     private fun loadAircraft(addresses: List<Long>) {
@@ -152,6 +172,13 @@ object CompanionController {
             "setWifi" -> {
                 changeWifiMode(WifiMode.valueOf(requireNotNull(command.mode)))
                 accepted("Wi-Fi change requested. Waiting for GATAS confirmation.")
+            }
+            "saveConfiguration", "restartGatas" -> {
+                val action = if (command.action == "saveConfiguration") DeviceAction.Save else DeviceAction.Restart
+                check(requestDeviceAction(action, command.expectedDeviceId, command.expectedBootId, id = command.id)) {
+                    "GATAS connection changed or is busy. Refresh before trying again."
+                }
+                accepted("Waiting for GATAS confirmation.")
             }
             "setGdl90" -> { setGdl90Enabled(requireNotNull(command.enabled)); completed("GDL90 setting saved") }
             "startScan" -> { DeviceDiscovery.start("watch"); accepted("Searching near your iPhone for 30 seconds") }
@@ -202,6 +229,7 @@ object CompanionController {
             "Active stream" to (bridge.activeStream ?: "—"),
         )
         return remoteJson.encodeToString(WatchSnapshot(
+            deviceControl = bridge.deviceControl,
             updatedAt = Clock.System.now().toEpochMilliseconds() / 1000.0,
             devices = current.devices.sortedBy { it.name }, discoveredDevices = current.discovery.devices,
             scanning = current.discovery.watchScanning, scanError = current.discovery.error,

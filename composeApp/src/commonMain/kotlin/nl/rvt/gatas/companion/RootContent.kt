@@ -111,6 +111,14 @@ fun RootContent(
                     textAlign = TextAlign.Center
                 )
 
+                // Android ends its foreground service after USB boot. Keep the
+                // terminal instruction visible on Home after that transition.
+                if (screen != Screen.Connected) {
+                    bridgeStatus.deviceControl.operation?.takeUnless { it.busy }?.let { operation ->
+                        Text(operation.message, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                    }
+                }
+
                 Box(modifier = Modifier.fillMaxSize()) {
                     when (screen) {
                         Screen.Landing -> LandingScreen(

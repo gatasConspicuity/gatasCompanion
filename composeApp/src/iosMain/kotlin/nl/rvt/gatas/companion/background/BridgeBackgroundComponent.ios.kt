@@ -2,6 +2,7 @@ package nl.rvt.gatas.companion.background
 
 import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.GaTasDevice
+import nl.rvt.gatas.companion.services.DeviceActionCommand
 
 actual object BridgeBackgroundComponent {
     private val controller = BridgeBackgroundController()
@@ -24,4 +25,6 @@ actual object BridgeBackgroundComponent {
     actual fun requestWifiModeChange(mode: WifiMode) {
         controller.requestWifiModeChange(mode)
     }
+
+    actual fun requestDeviceAction(command: DeviceActionCommand): Boolean = controller.requestDeviceAction(command)
 }

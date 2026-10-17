@@ -45,6 +45,7 @@ struct WatchSnapshot: Codable, Equatable {
     // ActivityKit belongs to the native iPhone process. Its WCSession adapter
     // adds this optional field; older phones/cached snapshots remain readable.
     var liveActivity: String?
+    var deviceControl: WatchDeviceControl?
 
     var liveActivityStatus: WatchLiveActivityStatus? {
         liveActivity.flatMap(WatchLiveActivityStatus.init(rawValue:))
@@ -121,9 +122,10 @@ struct WatchCommand: Codable {
     var icaoAddress: Int64?
     var mode: String?
     var enabled: Bool?
+    var expectedBootId: String?
 
     init(action: String, deviceId: String? = nil, expectedDeviceId: String? = nil,
-         icaoAddress: Int64? = nil, mode: String? = nil, enabled: Bool? = nil) {
+         icaoAddress: Int64? = nil, mode: String? = nil, enabled: Bool? = nil, expectedBootId: String? = nil) {
         self.version = 1
         self.id = UUID().uuidString
         self.action = action
@@ -133,9 +135,34 @@ struct WatchCommand: Codable {
         self.icaoAddress = icaoAddress
         self.mode = mode
         self.enabled = enabled
+        self.expectedBootId = expectedBootId
     }
 
     func encoded() throws -> String { String(decoding: try JSONEncoder().encode(self), as: UTF8.self) }
+}
+
+struct WatchDeviceControl: Codable, Equatable {
+    let checking: Bool
+    let capabilities: Int
+    let bootId: String?
+    let hasUnsavedChanges: Bool?
+    let operation: WatchDeviceOperation?
+    let recentResults: [WatchDeviceOperation]?
+
+    func supports(_ capability: Int) -> Bool { bootId != nil && capabilities & capability != 0 }
+
+    func result(for id: String) -> WatchDeviceOperation? {
+        if let operation, operation.id == id, !operation.busy { return operation }
+        return recentResults?.last { $0.id == id && !$0.busy }
+    }
+}
+
+struct WatchDeviceOperation: Codable, Equatable {
+    let id: String
+    let action: String
+    let phase: String
+    let message: String
+    var busy: Bool { ["preparing", "executing", "restarting"].contains(phase) }
 }
 
 struct WatchReply: Codable {
