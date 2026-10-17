@@ -8,6 +8,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import nl.rvt.gatas.companion.GaTasDevice
 import nl.rvt.gatas.companion.background.BridgeBackgroundComponent
@@ -21,9 +23,7 @@ fun PhonePressureControls(device: GaTasDevice, connected: Boolean, status: Phone
         Text("Uses your phone’s barometer to send air pressure to this GATAS device via Bluetooth. " +
             "This lets GATAS calculate pressure altitude without an onboard BMP280 sensor. " +
             "Your choice is saved for this device.")
-        Text("Measurements continue in the background while connected and may increase battery use. " +
-            "Requires OpenAce 3.5.1 or compatible type-11 pressure support. " +
-            "Firmware compatibility cannot be checked automatically.")
+        Text("Measurements continue in the background while connected and may increase battery use.")
         Text(phonePressurePlatformNotice(), style = MaterialTheme.typography.bodySmall)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Switch(checked = status.enabled, enabled = connected || status.enabled, onCheckedChange = {
@@ -31,21 +31,31 @@ fun PhonePressureControls(device: GaTasDevice, connected: Boolean, status: Phone
             })
             Text("Use phone barometer")
         }
-        PhonePressureStatusDisplay(connected, status)
+        PhonePressureStatusMessage(connected, status)
     }
 }
 
 @Composable
 fun PhonePressureSummary(device: GaTasDevice, connected: Boolean, status: PhonePressureStatus) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Phone barometer · ${device.name}", style = MaterialTheme.typography.titleMedium)
-        PhonePressureStatusDisplay(connected, status)
+        PhonePressureStatusMessage(connected, status)
+        PhonePressureReadings(status)
     }
 }
 
 @Composable
-private fun PhonePressureStatusDisplay(connected: Boolean, status: PhonePressureStatus) {
-    Text(when {
+private fun PhonePressureStatusMessage(connected: Boolean, status: PhonePressureStatus) {
+    val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val statusColor = when {
+        !status.enabled || !connected -> mutedColor
+        status.condition == PressureSensorCondition.Error ||
+            status.condition == PressureSensorCondition.PermissionDenied ||
+            status.condition == PressureSensorCondition.Unavailable || status.stale -> MaterialTheme.colorScheme.error
+        status.condition == PressureSensorCondition.Available && status.packetsSent > 0 -> Color(0xFF57D48B)
+        else -> mutedColor
+    }
+    Text(text = when {
         !status.enabled -> "Phone barometer disabled for this device"
         !connected -> "Waiting for Bluetooth"
         status.condition == PressureSensorCondition.Error -> "Barometer error: ${status.message ?: "Sensor unavailable"}"
@@ -55,11 +65,32 @@ private fun PhonePressureStatusDisplay(connected: Boolean, status: PhonePressure
         status.stale -> "Barometer measurement is stale"
         status.packetsSent > 0 -> "Pressure sent over Bluetooth; use by GATAS is not confirmed."
         else -> "Waiting for a new barometer measurement"
-    })
+    }, style = MaterialTheme.typography.bodyLarge, color = statusColor, fontWeight = FontWeight.SemiBold)
+}
+
+@Composable
+private fun PhonePressureReadings(status: PhonePressureStatus) {
+    val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
     status.pressureHpa?.let { pressure ->
-        Text("${(pressure * 10).roundToInt() / 10f} hPa · sample age ${status.sampleAgeMillis ?: 0} ms")
+        Text(
+            text = "${(pressure * 10).roundToInt() / 10f} hPa · sample age ${status.sampleAgeMillis ?: 0} ms",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
-    Text("${status.elapsedMillis / 1000}s · samples ${status.samplesReceived} · sent ${status.packetsSent}")
-    Text("Maximum gaps: sensor ${status.maximumSampleGapMillis} ms · send ${status.maximumSendGapMillis} ms")
-    Text("Maximum sensor delivery age: ${status.maximumDeliveryAgeMillis} ms")
+    Text(
+        text = "${status.elapsedMillis / 1000}s · samples ${status.samplesReceived} · sent ${status.packetsSent}",
+        style = MaterialTheme.typography.bodySmall,
+        color = mutedColor,
+    )
+    Text(
+        text = "Maximum gaps: sensor ${status.maximumSampleGapMillis} ms · send ${status.maximumSendGapMillis} ms",
+        style = MaterialTheme.typography.bodySmall,
+        color = mutedColor,
+    )
+    Text(
+        text = "Maximum sensor delivery age: ${status.maximumDeliveryAgeMillis} ms",
+        style = MaterialTheme.typography.bodySmall,
+        color = mutedColor,
+    )
 }
