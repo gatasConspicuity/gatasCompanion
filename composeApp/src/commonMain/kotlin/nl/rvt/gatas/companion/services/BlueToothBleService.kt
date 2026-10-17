@@ -45,6 +45,12 @@ import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.GaTasDevice
 import nl.rvt.gatas.companion.Gdl90BridgeSettings
 import nl.rvt.gatas.areDetailedDiagnosticsEnabled
+import nl.rvt.gatas.companion.pressure.DevicePhonePressurePreference
+import nl.rvt.gatas.companion.pressure.PhonePressureStatus
+import nl.rvt.gatas.companion.pressure.isFresh
+import nl.rvt.gatas.companion.pressure.phonePressureNowMillis
+import nl.rvt.gatas.companion.pressure.runPhonePressureConnections
+import nl.rvantwisk.gatas.lib.extensions.serializeOwnshipPressureV1
 import nl.rvt.gatas.companion.bluetooth.GATAS_PRIMARY_DEVICE
 import nl.rvt.gatas.companion.bluetooth.GATAS_COBS_CHARACTERISTIC
 import nl.rvt.gatas.companion.bluetooth.GATAS_RXTX_CHARACTERISTIC
@@ -67,6 +73,9 @@ class BlueToothBleService constructor(
         Udp,
         Ble,
     }
+
+    // Identity changes on every connection, including reconnection to the same peripheral.
+    private class PressureConnection(val peripheral: Peripheral)
 
     private data class RelayWorkItem(
         val sequence: Long,
@@ -99,6 +108,10 @@ class BlueToothBleService constructor(
     private var aircraftChangeJob: Job? = null
     private var wifiModeChangeJob: Job? = null
     private var stopJob: Job? = null
+    private var phonePressureJob: Job? = null
+    private val pressurePreference = DevicePhonePressurePreference(targetDevice.identifier)
+    private val pressureConnections = MutableStateFlow<PressureConnection?>(null)
+    private val packetWriter = BlePacketWriter()
     private var lastGdl90TrafficMark: TimeMark? = null
     private var gdl90DiagnosticWindowStartedAt = TimeSource.Monotonic.markNow()
     private var diagnosticHeartbeats = 0
@@ -134,6 +147,7 @@ class BlueToothBleService constructor(
         nextRelaySequence = 1L
         pendingTrafficCycle = null
         resetGdl90DiagnosticWindow()
+        pressurePreference.reload()
 
         _status.update {
             it.copy(
@@ -144,12 +158,33 @@ class BlueToothBleService constructor(
                 activeStream = null,
                 availableStreams = null,
                 gdl90 = initialGdl90Status(),
+                phonePressure = PhonePressureStatus(
+                    enabled = pressurePreference.enabled,
+                ),
                 lastError = null,
                 lastEvent = "Searching for GATAS BLE device..."
             )
         }
 
         val pendingStop = stopJob
+        phonePressureJob = scope.launch(Dispatchers.Main) {
+            pendingStop?.join()
+            runPhonePressureConnections(
+                preference = pressurePreference,
+                connections = pressureConnections,
+                send = { connection, sample ->
+                    sendResponse(
+                        connection.peripheral, cobsCharacteristic, "COBS", serializeOwnshipPressureV1(sample?.pressureHpa),
+                        allowWhileStopping = sample == null,
+                        payloadStillValid = {
+                            pressureConnections.value === connection &&
+                                (sample == null || (pressurePreference.enabled && sample.isFresh(phonePressureNowMillis())))
+                        },
+                    )
+                },
+                publish = { pressure -> _status.update { it.copy(phonePressure = pressure) } },
+            )
+        }
         reconnectJob = scope.launch {
             // UDP selectors and BLE observers from the previous run must be
             // fully closed before this run creates replacement resources.
@@ -158,7 +193,9 @@ class BlueToothBleService constructor(
                 try {
                     connectedPeripheral = connectAndObserve()
 
-                    if (connectedPeripheral != null) {
+                    val pressurePeripheral = connectedPeripheral
+                    if (pressurePeripheral != null) {
+                        pressureConnections.value = PressureConnection(pressurePeripheral)
                         _status.update {
                             it.copy(
                                 connecting = false,
@@ -170,6 +207,7 @@ class BlueToothBleService constructor(
                         }
                         connectedPeripheral?.state?.filterIsInstance<State.Disconnected>()
                             ?.first()
+                        pressureConnections.value = null
                         log.d("🔌 Disconnected. Reconnecting in ${RECONNECT_RETRY_DELAY_MILLIS}ms...")
                         _status.update {
                             it.copy(
@@ -186,6 +224,7 @@ class BlueToothBleService constructor(
                     connectedPeripheral = null
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
+                    pressureConnections.value = null
                     log.e {
                         "⚠️ Connection attempt failed: ${e.message}. Retrying in ${RECONNECT_RETRY_DELAY_MILLIS}ms..."
                     }
@@ -212,9 +251,11 @@ class BlueToothBleService constructor(
         val reconnectToStop = reconnectJob
         val aircraftChangeToStop = aircraftChangeJob
         val wifiChangeToStop = wifiModeChangeJob
+        val pressureToStop = phonePressureJob
         reconnectJob = null
         aircraftChangeJob = null
         wifiModeChangeJob = null
+        phonePressureJob = null
 
         _status.update {
             it.copy(
@@ -225,6 +266,7 @@ class BlueToothBleService constructor(
                 activeStream = null,
                 availableStreams = null,
                 gdl90 = Gdl90BridgeStatus(),
+                phonePressure = PhonePressureStatus(enabled = pressurePreference.enabled),
                 lastEvent = "Bridge stopped",
                 lastError = null
             )
@@ -232,6 +274,8 @@ class BlueToothBleService constructor(
         GatasLiveActivityBridge.reset()
 
         stopJob = scope.launch {
+            pressureToStop?.cancelAndJoin()
+            pressureConnections.value = null
             aircraftChangeToStop?.cancelAndJoin()
             wifiChangeToStop?.cancelAndJoin()
             reconnectToStop?.cancelAndJoin()
@@ -240,6 +284,13 @@ class BlueToothBleService constructor(
             connectedPeripheral = null
             udpRelayService.stop()
             gdl90UdpBridgeService.stop()
+        }
+    }
+
+    fun requestPhonePressureChange(deviceId: String, enabled: Boolean) {
+        if (!_status.value.running) return
+        if (pressurePreference.change(deviceId, enabled)) {
+            _status.update { it.copy(phonePressure = PhonePressureStatus(enabled = enabled)) }
         }
     }
 
@@ -905,8 +956,10 @@ class BlueToothBleService constructor(
         peripheral: Peripheral,
         characteristic: Characteristic,
         label: String,
-        payload: ByteArray
-    ) {
+        payload: ByteArray,
+        allowWhileStopping: Boolean = false,
+        payloadStillValid: () -> Boolean = { true },
+    ): Boolean {
         val framedPayload = when (label) {
             "NMEA" -> when {
                 payload.endsWithBytes('\r'.code.toByte(), '\n'.code.toByte()) -> payload
@@ -926,14 +979,16 @@ class BlueToothBleService constructor(
             peripheral.maximumWriteValueLengthForType(WriteType.WithoutResponse)
         }.getOrDefault(framedPayload.size.coerceAtLeast(1))
 
-        framedPayload
-            .asList()
-            .chunked(maxWriteSize)
-            .map { chunk -> chunk.toByteArray() }
-            .forEach { chunk ->
+        val sent = packetWriter.write(framedPayload, maxWriteSize,
+            mayWrite = {
+                connectedPeripheral === peripheral && (_status.value.running || allowWhileStopping) && payloadStillValid()
+            },
+            writeChunk = { chunk ->
                 log.d { "Sending $label BLE response chunk (${chunk.size} bytes)" }
-                peripheral.write(characteristic, chunk)
-            }
+                peripheral.write(characteristic, chunk, WriteType.WithoutResponse)
+            },
+        )
+        if (!sent) return false
         _status.update {
             it.recordPacket(
                 linkSide = LinkSide.Ble,
@@ -942,6 +997,7 @@ class BlueToothBleService constructor(
                 lastEvent = "BLE response sent (${payload.size} bytes)"
             )
         }
+        return true
     }
 
     private fun ByteArray.endsWithBytes(vararg suffix: Byte): Boolean {

@@ -73,6 +73,8 @@ import compose.icons.lineawesomeicons.CogSolid
 import nl.rvt.gatas.PlatformKeepScreenOnEffect
 import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.services.BridgeStatus
+import nl.rvt.gatas.companion.pressure.PhonePressureControls
+import nl.rvt.gatas.companion.pressure.PhonePressureSummary
 
 @Composable
 fun ConnectScreen(
@@ -163,6 +165,16 @@ fun ConnectScreen(
             Gdl90BridgeCard(status = bridgeStatus)
         }
 
+        if (bridgeStatus.phonePressure.enabled) {
+            companionState.activeDevice?.let { device ->
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        PhonePressureSummary(device, bridgeStatus.bleConnected, bridgeStatus.phonePressure)
+                    }
+                }
+            }
+        }
+
         Button(
             onClick = {
                 onStopBridge()
@@ -195,6 +207,7 @@ fun ConnectScreen(
     if (showGatasSettingsDialog) {
         GatasSettingsDialog(
             bridgeStatus = bridgeStatus,
+            device = companionState.activeDevice,
             onRequestWifiModeChange = CompanionController::changeWifiMode,
             onDismiss = { showGatasSettingsDialog = false },
         )
@@ -320,6 +333,7 @@ private fun ConnectionInfoCard(
 @Composable
 private fun GatasSettingsDialog(
     bridgeStatus: BridgeStatus,
+    device: GaTasDevice?,
     onRequestWifiModeChange: (WifiMode) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -342,6 +356,7 @@ private fun GatasSettingsDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -358,6 +373,10 @@ private fun GatasSettingsDialog(
                     OutlinedButton(onClick = onDismiss) {
                         Text("Close")
                     }
+                }
+
+                if (device != null) {
+                    PhonePressureControls(device, bridgeStatus.bleConnected, bridgeStatus.phonePressure)
                 }
 
                 Text(

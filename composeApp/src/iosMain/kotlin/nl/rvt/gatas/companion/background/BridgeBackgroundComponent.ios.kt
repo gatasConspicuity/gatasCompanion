@@ -24,4 +24,8 @@ actual object BridgeBackgroundComponent {
     actual fun requestWifiModeChange(mode: WifiMode) {
         controller.requestWifiModeChange(mode)
     }
+
+    actual fun requestPhonePressureChange(deviceId: String, enabled: Boolean) {
+        controller.requestPhonePressureChange(deviceId, enabled)
+    }
 }

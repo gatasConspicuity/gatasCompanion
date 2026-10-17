@@ -11,6 +11,22 @@ import kotlin.math.roundToInt
 
 private const val AIRCRAFT_CONFIGURATION_WIFI_MODE_MASK = 0x03
 
+/** Ambient pressure from the phone sensor. QNH is deliberately unavailable. */
+fun serializeOwnshipPressureV1(pressureHpa: Float?): ByteArray {
+    val pressure = if (pressureHpa == null) {
+        0xffff
+    } else {
+        require(pressureHpa.isFinite() && pressureHpa > 0f && pressureHpa <= 6553.4f)
+        (pressureHpa * 10f).roundToInt().also { require(it in 1..0xfffe) }
+    }
+    return CobsByteArray(6).apply {
+        put1(MessageType.OWNSHIP_PRESSURE_V1.value)
+        put2(pressure.toShort())
+        put2(0xffff.toShort())
+        put1(2) // PressureSensor; also identifies which accepted method to invalidate.
+    }.getCobs()
+}
+
 /**
  * Encode a AircraftPosition to a COBS array.
  * Application -> GATAS

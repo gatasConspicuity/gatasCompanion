@@ -14,6 +14,7 @@ import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.background.BridgeBackgroundComponent
 import nl.rvt.gatas.companion.bluetooth.DeviceDiscovery
 import nl.rvt.gatas.companion.bluetooth.DiscoveryState
+import nl.rvt.gatas.companion.pressure.PhonePressureSettings
 import nl.rvt.gatas.companion.remote.RemoteCommand
 import nl.rvt.gatas.companion.remote.RemoteCommandPolicy
 import nl.rvt.gatas.companion.remote.RemoteCommandProcessor
@@ -92,6 +93,7 @@ object CompanionController {
         }
         val devices = state.value.devices.filterNot { it.identifier == device.identifier }.toSet()
         KnownDeviceStore.saveDevices(devices)
+        PhonePressureSettings().remove(device.identifier)
         if (KnownDeviceStore.loadLastUsedDevice()?.identifier == device.identifier) KnownDeviceStore.saveLastUsedDevice(null)
         mutableState.value = state.value.copy(devices = devices)
     }
