@@ -1,5 +1,6 @@
 package nl.rvt.gatas.companion
 
+import androidx.core.content.edit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -22,10 +23,11 @@ actual object AircraftCacheStore {
     }
 
     actual suspend fun saveEntry(entry: AircraftPickerEntry) = withContext(Dispatchers.IO) {
-        appContext
-            .getSharedPreferences(PREFERENCES_NAME, 0)
-            .edit()
-            .putString("$ENTRY_PREFIX${entry.icaoHexCode}", json.encodeToString(AircraftPickerEntry.serializer(), entry))
-            .apply()
+        appContext.getSharedPreferences(PREFERENCES_NAME, 0).edit {
+            putString(
+                "$ENTRY_PREFIX${entry.icaoHexCode}",
+                json.encodeToString(AircraftPickerEntry.serializer(), entry),
+            )
+        }
     }
 }

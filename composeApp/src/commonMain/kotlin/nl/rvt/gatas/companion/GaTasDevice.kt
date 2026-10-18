@@ -1,5 +1,8 @@
 package nl.rvt.gatas.companion
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class GaTasDevice(
     val name: String,
     val identifier: String,

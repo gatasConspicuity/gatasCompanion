@@ -16,12 +16,14 @@ import kotlinx.io.readByteArray
 
 private val udpLog = Logger.withTag("GatasUdpRelay")
 
+class UdpRelayTimeoutException(message: String) : Exception(message)
+
 class GatasUdpRelayService(
     private val host: String = "gatas.vantwisk.nl",
     private val port: Int = 3000,
     private val responseTimeoutMs: Long = 2_500,
 ) {
-    private val selectorManager = SelectorManager(Dispatchers.IO)
+    private var selectorManager: SelectorManager? = null
     private val mutex = Mutex()
 
     private var socket: ConnectedDatagramSocket? = null
@@ -41,7 +43,7 @@ class GatasUdpRelayService(
                 activeSocket.receive()
             } ?: run {
                 udpLog.w { "Timed out waiting for UDP response from $host:$port" }
-                return null
+                throw UdpRelayTimeoutException("Timed out waiting for UDP response from $host:$port")
             }
 
             response.packet.readByteArray()
@@ -56,7 +58,8 @@ class GatasUdpRelayService(
     suspend fun stop() = mutex.withLock {
         socket?.close()
         socket = null
-        selectorManager.close()
+        selectorManager?.close()
+        selectorManager = null
     }
 
     private suspend fun ensureSocket(): ConnectedDatagramSocket {
@@ -65,7 +68,10 @@ class GatasUdpRelayService(
             return current
         }
 
-        val created = aSocket(selectorManager).udp().connect(
+        val selector = selectorManager ?: SelectorManager(Dispatchers.IO).also {
+            selectorManager = it
+        }
+        val created = aSocket(selector).udp().connect(
             remoteAddress = InetSocketAddress(host, port)
         )
         socket = created

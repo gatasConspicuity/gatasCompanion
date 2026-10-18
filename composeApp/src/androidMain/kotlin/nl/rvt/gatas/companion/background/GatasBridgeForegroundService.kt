@@ -96,6 +96,7 @@ class GatasBridgeForegroundService : Service() {
 
         stopBridge(updateNotification = false)
         currentDevice = device
+        _activeDevice.value = device
 
         val relayService = GatasUdpRelayService()
         val service = BlueToothBleService(device, relayService)
@@ -126,6 +127,7 @@ class GatasBridgeForegroundService : Service() {
         bridgeService?.stop()
         bridgeService = null
         currentDevice = null
+        _activeDevice.value = null
         _status.value = BridgeStatus()
         if (updateNotification) {
             updateNotification(
@@ -192,11 +194,7 @@ class GatasBridgeForegroundService : Service() {
     }
 
     private fun pendingIntentMutableFlag(): Int {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PendingIntent.FLAG_IMMUTABLE
-        } else {
-            0
-        }
+        return PendingIntent.FLAG_IMMUTABLE
     }
 
     companion object {
@@ -214,6 +212,8 @@ class GatasBridgeForegroundService : Service() {
 
         private val _status = MutableStateFlow(BridgeStatus())
         val status: StateFlow<BridgeStatus> = _status.asStateFlow()
+        private val _activeDevice = MutableStateFlow<GaTasDevice?>(null)
+        val activeDevice: StateFlow<GaTasDevice?> = _activeDevice.asStateFlow()
 
         fun start(context: Context, device: GaTasDevice) {
             val intent = Intent(context, GatasBridgeForegroundService::class.java).apply {

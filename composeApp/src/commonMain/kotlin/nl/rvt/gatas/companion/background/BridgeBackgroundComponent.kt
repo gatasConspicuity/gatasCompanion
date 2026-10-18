@@ -7,6 +7,7 @@ import nl.rvt.gatas.companion.services.BridgeStatus
 
 expect object BridgeBackgroundComponent {
     val status: StateFlow<BridgeStatus>
+    val activeDevice: StateFlow<GaTasDevice?>
 
     fun start(device: GaTasDevice)
     fun stop()

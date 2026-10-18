@@ -1,5 +1,6 @@
 package nl.rvt.gatas.companion
 
+import androidx.core.content.edit
 import nl.rvt.gatas.appContext
 
 actual object Gdl90BridgeSettings {
@@ -12,10 +13,8 @@ actual object Gdl90BridgeSettings {
             .getBoolean(ENABLED_KEY, false)
 
     actual fun setEnabled(enabled: Boolean) {
-        appContext
-            .getSharedPreferences(PREFERENCES_NAME, 0)
-            .edit()
-            .putBoolean(ENABLED_KEY, enabled)
-            .apply()
+        appContext.getSharedPreferences(PREFERENCES_NAME, 0).edit {
+            putBoolean(ENABLED_KEY, enabled)
+        }
     }
 }

@@ -1,6 +1,7 @@
 package nl.rvt.gatas.companion
 
 import android.annotation.SuppressLint
+import android.webkit.WebResourceRequest
 import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -22,9 +23,17 @@ actual fun EmbeddedWebView(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT,
                 )
-                webViewClient = WebViewClient()
+                webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(
+                        view: WebView,
+                        request: WebResourceRequest,
+                    ): Boolean = !request.url.isAllowedGatasUrl()
+                }
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                settings.allowFileAccess = false
+                settings.allowContentAccess = false
+                settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
                 loadUrl(url)
             }
         },
@@ -35,3 +44,11 @@ actual fun EmbeddedWebView(
         },
     )
 }
+
+/**
+ * Keeps the embedded browser inside the one HTTPS origin used by the aircraft
+ * details screen. Returning `true` from the client blocks every other origin,
+ * including custom schemes and redirects to clear-text HTTP.
+ */
+private fun android.net.Uri.isAllowedGatasUrl(): Boolean =
+    scheme == "https" && host.equals("gatas.vantwisk.nl", ignoreCase = true)

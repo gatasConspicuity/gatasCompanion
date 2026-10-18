@@ -1,7 +1,6 @@
 package nl.rvt.gatas
 
 import androidx.compose.runtime.Composable
-import co.touchlab.kermit.Logger
 import com.juul.kable.ExperimentalApi
 import com.juul.kable.Peripheral
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -17,7 +16,8 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 actual suspend fun requestMtuIfSupported(peripheral: Peripheral) {
-    Logger.w { "requestMtuIfSupported NOOP" }
+    // CoreBluetooth negotiates the ATT MTU internally on iOS and does not expose an
+    // application API equivalent to Android's requestMtu(). No action is required.
 }
 
 @OptIn(ExperimentalApi::class, ExperimentalUuidApi::class)
@@ -33,7 +33,9 @@ actual suspend fun loadKoins() {
 
 @Composable
 actual fun PlatformKeepScreenOnEffect() {
-    Logger.w { "PlatformKeepScreenOnEffect NOOP" }
+    // The Android implementation owns a window flag. Compose Multiplatform does not
+    // expose the corresponding UIApplication idle-timer setting here, so iOS keeps
+    // its normal system-controlled display behaviour.
 }
 
 //fun listFilesRecursively(path: String): List<String> {

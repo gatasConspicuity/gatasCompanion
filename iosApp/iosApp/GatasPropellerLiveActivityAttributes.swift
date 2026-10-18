@@ -40,15 +40,17 @@ struct GatasPropellerIcon: View {
                 .frame(width: size * 0.42, height: size * 0.42)
         }
         .frame(width: size, height: size)
+        .clipped()
         .rotationEffect(.degrees(Double(rotationDegrees)))
         .animation(.easeOut(duration: 0.25), value: rotationDegrees)
+        .accessibilityHidden(true)
     }
 
     private var bladeColor: Color {
-        active ? Color.white.opacity(0.95) : Color.white.opacity(0.45)
+        active ? Color.white : Color.white.opacity(0.72)
     }
 
     private var hubColor: Color {
-        active ? Color.white : Color.white.opacity(0.65)
+        active ? Color.white : Color.white.opacity(0.78)
     }
 }

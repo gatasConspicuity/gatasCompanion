@@ -49,7 +49,7 @@ struct GatasPropellerLiveActivityWidget: Widget {
                     size: 18
                 )
             } compactTrailing: {
-                Text(context.state.isRunning ? "G" : "…")
+                Text(context.state.isRunning ? "RX" : "--")
                     .font(.caption2)
                     .fontWeight(.semibold)
             } minimal: {
@@ -93,3 +93,52 @@ struct GatasLiveActivityBundle: WidgetBundle {
         GatasPropellerLiveActivityWidget()
     }
 }
+
+#if DEBUG
+@available(iOS 17.0, *)
+private let previewAttributes = GatasPropellerLiveActivityAttributes(title: "GATAS Bridge")
+
+@available(iOS 17.0, *)
+private let runningPreviewState = GatasPropellerLiveActivityAttributes.ContentState(
+    rotationDegrees: 120,
+    isRunning: true
+)
+
+@available(iOS 17.0, *)
+private let idlePreviewState = GatasPropellerLiveActivityAttributes.ContentState(
+    rotationDegrees: 0,
+    isRunning: false
+)
+
+@available(iOS 17.0, *)
+#Preview("Lock Screen", as: .content, using: previewAttributes) {
+    GatasPropellerLiveActivityWidget()
+} contentStates: {
+    runningPreviewState
+    idlePreviewState
+}
+
+@available(iOS 17.0, *)
+#Preview("Dynamic Island Expanded", as: .dynamicIsland(.expanded), using: previewAttributes) {
+    GatasPropellerLiveActivityWidget()
+} contentStates: {
+    runningPreviewState
+    idlePreviewState
+}
+
+@available(iOS 17.0, *)
+#Preview("Dynamic Island Compact", as: .dynamicIsland(.compact), using: previewAttributes) {
+    GatasPropellerLiveActivityWidget()
+} contentStates: {
+    runningPreviewState
+    idlePreviewState
+}
+
+@available(iOS 17.0, *)
+#Preview("Dynamic Island Minimal", as: .dynamicIsland(.minimal), using: previewAttributes) {
+    GatasPropellerLiveActivityWidget()
+} contentStates: {
+    runningPreviewState
+    idlePreviewState
+}
+#endif

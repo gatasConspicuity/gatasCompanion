@@ -13,6 +13,8 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,7 +28,6 @@ import compose.icons.lineawesomeicons.CogSolid
 import compose.icons.lineawesomeicons.HomeSolid
 import dev.icerock.moko.permissions.PermissionsController
 import dev.icerock.moko.permissions.compose.BindEffect
-import nl.rvt.gatas.companion.background.BridgeBackgroundComponent
 import nl.rvt.gatas.companion.RootStore.Screen
 import nl.rvt.gatas.companion.bluetooth.BlueToothSearchScreen
 
@@ -37,29 +38,21 @@ fun RootContent(
     permissionsController: PermissionsController
 ) {
     val model = remember { RootStore() }
-    val state = model.state
-    val bridgeStatus by BridgeBackgroundComponent.status.collectAsState()
+    val state by CompanionController.state.collectAsState()
+    val screen = model.screen
+    val bridgeStatus = state.bridge
+    val activeDevice = state.activeDevice
 
     // Required to bind permissions lifecycle to the activity
     BindEffect(permissionsController)
 
 
-//    fun Context.findActivity(): Activity? {
-//        var context = this
-//        while (context is ContextWrapper) {
-//            if (context is Activity) return context
-//            context = context.baseContext
-//        }
-//        return null
-//    }
-
-    LaunchedEffect(state.screen, state.connectTo) {
-        if (state.screen == Screen.Connected) {
-            state.connectTo?.let(BridgeBackgroundComponent::start)
-        }
+    LaunchedEffect(activeDevice) {
+        if (activeDevice != null) model.showConnected()
+        else if (model.screen == Screen.Connected) model.landing()
     }
 
-    val screenTitle = when (state.screen) {
+    val screenTitle = when (screen) {
         Screen.Landing -> "GATAS Companion"
         Screen.Connected -> "Connection Info"
         Screen.BlueTooth -> "Find GATAS"
@@ -67,10 +60,18 @@ fun RootContent(
     }
 
     AppTheme {
+        state.actionError?.let { error ->
+            AlertDialog(
+                onDismissRequest = CompanionController::dismissActionError,
+                title = { Text("Device changed") },
+                text = { Text(error) },
+                confirmButton = { TextButton(onClick = CompanionController::dismissActionError) { Text("OK") } },
+            )
+        }
         Scaffold(
             modifier = modifier,
             bottomBar = {
-                if (state.screen != Screen.Connected) {
+                if (screen != Screen.Connected) {
                     NavigationBar {
                         NavigationBarItem(
                             icon = {
@@ -79,7 +80,7 @@ fun RootContent(
                                     contentDescription = "Home",
                                 )
                             },
-                            selected = state.screen == Screen.Landing,
+                            selected = screen == Screen.Landing,
                             onClick = model::landing,
                             label = { Text("Home") }
                         )
@@ -90,7 +91,7 @@ fun RootContent(
                                     contentDescription = "Settings",
                                 )
                             },
-                            selected = state.screen == Screen.Settings,
+                            selected = screen == Screen.Settings,
                             onClick = model::settings,
                             label = { Text("Settings") }
                         )
@@ -111,10 +112,10 @@ fun RootContent(
                 )
 
                 Box(modifier = Modifier.fillMaxSize()) {
-                    when (state.screen) {
+                    when (screen) {
                         Screen.Landing -> LandingScreen(
                             devices = state.devices,
-                            deleteItem = model::deleteItem,
+                            deleteItem = CompanionController::deleteDevice,
                             onItemClicked = model::connected,
                             onScanClicked = model::blueTooth,
                             addBleDevice = {},
@@ -124,23 +125,23 @@ fun RootContent(
                         Screen.BlueTooth -> {
 
                             BlueToothSearchScreen(
-                                onClose = { model::landing },
+                                onClose = model::landing,
                                 onItemClicked = {
-                                    model.addItem(it)
+                                    CompanionController.saveDevice(it)
                                     model.landing()
                                 },
                             )
                         }
 
                         Screen.Settings -> SettingsScreen(
-                            gdl90BridgeEnabled = state.gdl90BridgeEnabled,
-                            onGdl90BridgeEnabledChanged = model::setGdl90BridgeEnabled,
+                            gdl90BridgeEnabled = state.gdl90Enabled,
+                            onGdl90BridgeEnabledChanged = CompanionController::setGdl90Enabled,
                         )
 
                         Screen.Connected -> ConnectScreen(
                             bridgeStatus = bridgeStatus,
                             onBack = model::landing,
-                            onStopBridge = BridgeBackgroundComponent::stop,
+                            onStopBridge = CompanionController::stop,
                         )
                     }
                 }

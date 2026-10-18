@@ -12,13 +12,12 @@ struct ComposeView: UIViewControllerRepresentable {
 
 struct ContentView: View {
     var body: some View {
-        ZStack {
-            ComposeView()
-                .ignoresSafeArea(.keyboard) // Compose has own keyboard handler
-
-            if #available(iOS 16.1, *) {
-                LiveActivityBootstrapView()
+        ComposeView()
+            .ignoresSafeArea(.keyboard) // Compose has own keyboard handler
+            .onContinueUserActivity(CompanionHandoff.showLiveActivity) { _ in
+                // Handoff brings the person here through the system UI. Read
+                // the live bridge state; never restart a bridge from old data.
+                GatasLiveActivityManager.shared.synchronize()
             }
-        }
     }
 }

@@ -6,6 +6,7 @@ import nl.rvt.gatas.companion.GaTasDevice
 
 actual object BridgeBackgroundComponent {
     actual val status = GatasBridgeForegroundService.status
+    actual val activeDevice = GatasBridgeForegroundService.activeDevice
 
     actual fun start(device: GaTasDevice) {
         GatasBridgeForegroundService.start(appContext, device)

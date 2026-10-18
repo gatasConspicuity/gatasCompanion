@@ -2,8 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>$(APP_NAME)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,20 +19,32 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>We need bluetooth to discover, connect to the GATAS conspicuity device.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>We need bluetooth to discover, connect to the GATAS conspicuity device.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>nl.rvt.gatas.companion.show-live-activity</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -48,22 +64,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-    
-    <key>UIBackgroundModes</key>
-    <array>
-        <!--for connecting to devices (client)-->
-        <string>bluetooth-central</string>
-
-        <!--for server configurations if needed-->
-        <string>bluetooth-peripheral</string>
-    </array>
-
-    <!--Description of the Bluetooth request message (required on iOS 10, deprecated)-->
-    <key>NSBluetoothPeripheralUsageDescription</key>
-    <string>We need bluetooth to discover, connect to the GATAS conspicuity device.</string>
-
-    <!--Description of the Bluetooth request message (required on iOS 13)-->
-    <key>NSBluetoothAlwaysUsageDescription</key>
-    <string>We need bluetooth to discover, connect to the GATAS conspicuity device.</string>
 </dict>
 </plist>

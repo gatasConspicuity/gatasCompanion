@@ -7,6 +7,7 @@ actual object BridgeBackgroundComponent {
     private val controller = BridgeBackgroundController()
 
     actual val status = controller.status
+    actual val activeDevice = controller.activeDevice
 
     actual fun start(device: GaTasDevice) {
         controller.start(device)

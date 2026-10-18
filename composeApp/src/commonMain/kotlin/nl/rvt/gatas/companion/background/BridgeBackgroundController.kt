@@ -21,19 +21,22 @@ class BridgeBackgroundController(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _status = MutableStateFlow(BridgeStatus())
     val status: StateFlow<BridgeStatus> = _status.asStateFlow()
+    private val _activeDevice = MutableStateFlow<GaTasDevice?>(null)
+    val activeDevice: StateFlow<GaTasDevice?> = _activeDevice.asStateFlow()
 
-    private var activeDevice: GaTasDevice? = null
+    private var currentDevice: GaTasDevice? = null
     private var activeService: BlueToothBleService? = null
     private var statusJob: Job? = null
 
     fun start(device: GaTasDevice) {
-        if (activeDevice == device && activeService != null) {
+        if (currentDevice == device && activeService != null) {
             return
         }
 
         stop()
 
-        activeDevice = device
+        currentDevice = device
+        _activeDevice.value = device
         val bridgeService = createBridgeService(device)
         activeService = bridgeService
 
@@ -52,7 +55,8 @@ class BridgeBackgroundController(
 
         activeService?.stop()
         activeService = null
-        activeDevice = null
+        currentDevice = null
+        _activeDevice.value = null
         _status.value = BridgeStatus()
     }
 

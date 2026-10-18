@@ -2,7 +2,7 @@
 agp = "8.10.0"
 android-compileSdk = "36"
 android-minSdk = "24"
-android-targetSdk = "35"
+android-targetSdk = "36"
 androidx-activityCompose = "1.13.0"
 androidx-appcompat = "1.7.1"
 androidx-constraintlayout = "2.2.1"
@@ -28,6 +28,7 @@ kermitVersion = "2.0.8"
 koin-version = "4.1.1"
 gatas-library = "1.0.0"
 okio = "3.17.0"
+coroutines = "1.10.2"
 
 [libraries]
 #gatas-library = { module = "nl.rvantwisk.gatas:gatas-library", version.ref = "gatas-library" }
@@ -74,6 +75,7 @@ koin-logger-slf4j = { module = "io.insert-koin:koin-logger-slf4j", version.ref =
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin-version" }
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin-version" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 
 composeIcons-cssGg = { module = "br.com.devsrsouza.compose.icons:css-gg", version.ref = "composeIcons" }
 composeIcons-weatherIcons = { module = "br.com.devsrsouza.compose.icons:erikflowers-weather-icons", version.ref = "composeIcons" }

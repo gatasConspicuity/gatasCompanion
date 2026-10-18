@@ -37,6 +37,7 @@ kotlin {
             implementation(libs.androidx.core.ktx)
             implementation(libs.kable)
             implementation(libs.moko.permissions)
+            // Location permission is needed only for BLE scanning on older Android versions.
             implementation(libs.moko.permissions.location)
             implementation(libs.ktor.okhttp)
             implementation(libs.compose.material3)
@@ -62,7 +63,6 @@ kotlin {
             implementation(libs.moko.permissions)
             implementation(libs.moko.permissions.compose)
             implementation(libs.moko.permissions.bluetooth)
-            implementation(libs.moko.permissions.location)
             implementation(libs.kable)
             implementation(libs.compose.material3)
             implementation(libs.bundles.ktor)
@@ -86,6 +86,7 @@ kotlin {
 
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 

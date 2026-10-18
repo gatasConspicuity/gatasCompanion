@@ -44,7 +44,7 @@ fun BlueToothSearchScreen(
     onItemClicked: (GaTasDevice: GaTasDevice) -> Unit,
     onClose: () -> Unit = {},
 ) {
-    val advertisements by scannerViewModel.advertisements.collectAsState()
+    val discovery by scannerViewModel.discovery.collectAsState()
 
     LaunchedEffect(Unit) {
         scannerViewModel.startScanning()
@@ -56,9 +56,13 @@ fun BlueToothSearchScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        discovery.error?.let { Text(it, modifier = Modifier.padding(16.dp)) }
+        if (!discovery.scanning && discovery.devices.isEmpty()) {
+            Text("Search finished. Reopen this screen to search again.", modifier = Modifier.padding(16.dp))
+        }
         ListContent(
-            items = advertisements,
+            items = discovery.devices,
             onItemClicked = onItemClicked
         )
     }
