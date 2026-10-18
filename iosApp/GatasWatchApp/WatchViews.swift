@@ -250,10 +250,29 @@ struct WatchDevices: View {
 
 struct WatchSettings: View {
     @EnvironmentObject private var session: WatchSession
+    @State private var restartingState: WatchSnapshot?
     var body: some View {
         List {
             WatchConnectionHeader()
             if let state = session.snapshot {
+                Section("GATAS device") {
+                    if let control = state.deviceControl {
+                        if control.checking { Text("Checking firmware support…").font(.caption) }
+                        if control.bootId == nil { Text("Device actions require updated GATAS firmware.").font(.caption) }
+                        if let dirty = control.hasUnsavedChanges {
+                            Text(dirty ? "Unsaved configuration" : "Configuration saved").font(.caption)
+                        }
+                        Button("Save configuration") { session.send(action: "saveConfiguration", observedState: state) }
+                            .frame(minHeight: 44)
+                            .disabled(!session.canControl || !state.bleConnected || !control.supports(1) || state.pendingAircraft != nil || state.pendingWifiMode != nil)
+                        Button("Restart GATAS", role: .destructive) { restartingState = state }
+                            .frame(minHeight: 44)
+                            .disabled(!session.canControl || !state.bleConnected || !control.supports(2) || state.pendingAircraft != nil || state.pendingWifiMode != nil)
+                        if let operation = control.operation { Text(operation.message).font(.caption) }
+                    } else {
+                        Text("Update the iPhone app to use GATAS device actions.").font(.caption)
+                    }
+                }
                 Section("GDL90 on iPhone") {
                     Toggle("Enable bridge", isOn: Binding(get: { state.gdl90Enabled }, set: { session.send(action: "setGdl90", enabled: $0) }))
                         .disabled(!session.canControl)
@@ -270,7 +289,16 @@ struct WatchSettings: View {
                 }
             }
             WatchCommandMessage()
-        }.navigationTitle("Settings")
+        }
+        .navigationTitle("Settings")
+        .confirmationDialog("Restart GATAS?", isPresented: Binding(get: { restartingState != nil }, set: { if !$0 { restartingState = nil } }), titleVisibility: .visible) {
+            Button("Restart GATAS", role: .destructive) {
+                session.send(action: "restartGatas", observedState: restartingState)
+                restartingState = nil
+            }
+        } message: {
+            Text("Traffic forwarding will pause. Unsaved configuration remains available until power is disconnected.")
+        }
     }
 }
 

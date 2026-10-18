@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import nl.rvt.gatas.companion.AircraftPickerEntry
 import nl.rvt.gatas.companion.GaTasDevice
+import nl.rvt.gatas.companion.services.DeviceControlState
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -20,6 +21,7 @@ data class RemoteCommand(
     val icaoAddress: Long? = null,
     val mode: String? = null,
     val enabled: Boolean? = null,
+    val expectedBootId: String? = null,
 )
 
 @Serializable
@@ -63,6 +65,7 @@ class RemoteCommandProcessor(
 /** Deliberately contains display data only, rather than the raw firmware configuration. */
 @Serializable
 data class WatchSnapshot(
+    val deviceControl: DeviceControlState? = null,
     val version: Int = 1,
     val updatedAt: Double,
     val devices: List<GaTasDevice>,

@@ -5,6 +5,7 @@ import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.pressure.PhonePressureStatus
 
 data class BridgeStatus(
+    val deviceControl: DeviceControlState = DeviceControlState(),
     val running: Boolean = false,
     val connecting: Boolean = false,
     val bleConnected: Boolean = false,

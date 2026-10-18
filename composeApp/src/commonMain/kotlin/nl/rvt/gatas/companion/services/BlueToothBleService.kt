@@ -20,9 +20,11 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
@@ -104,6 +106,23 @@ class BlueToothBleService constructor(
         characteristicOf(GATAS_PRIMARY_DEVICE, GATAS_COBS_CHARACTERISTIC)
 
     private var connectedPeripheral: Peripheral? = null
+    private val deviceActions = DeviceActionClient()
+    private var deviceSession: Any? = null
+    private val deviceActionScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    init {
+        deviceActionScope.launch {
+            deviceActions.state.collect { control -> _status.update { it.copy(deviceControl = control) } }
+        }
+    }
+
+    // Main-confined reservation is shared by native phone and Watch controls.
+    fun requestDeviceAction(command: DeviceActionCommand): Boolean {
+        if (command.deviceId != targetDevice.identifier || !_status.value.bleConnected ||
+            aircraftChangeJob?.isActive == true || wifiModeChangeJob?.isActive == true ||
+            _status.value.aircraftChangeTargetIcaoAddress != null || _status.value.wifiModeChangeTarget != null) return false
+        return deviceActions.request(command)
+    }
     private var reconnectJob: Job? = null
     private var aircraftChangeJob: Job? = null
     private var wifiModeChangeJob: Job? = null
@@ -208,6 +227,13 @@ class BlueToothBleService constructor(
                         connectedPeripheral?.state?.filterIsInstance<State.Disconnected>()
                             ?.first()
                         pressureConnections.value = null
+                        val session = deviceSession
+                        val usb = session != null && deviceActions.disconnected(session)
+                        deviceSession = null
+                        if (usb) {
+                            withContext(Dispatchers.Main) { stop() }
+                            return@launch
+                        }
                         log.d("🔌 Disconnected. Reconnecting in ${RECONNECT_RETRY_DELAY_MILLIS}ms...")
                         _status.update {
                             it.copy(
@@ -225,6 +251,16 @@ class BlueToothBleService constructor(
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
                     pressureConnections.value = null
+                    val session = deviceSession
+                    val usb = session != null && deviceActions.disconnected(session)
+                    deviceSession = null
+                    // Some BLE stacks report the bootloader disconnect as an
+                    // exception rather than a Disconnected state. Both paths
+                    // must stop the bridge instead of reconnecting to USB boot.
+                    if (usb) {
+                        withContext(Dispatchers.Main) { stop() }
+                        return@launch
+                    }
                     log.e {
                         "⚠️ Connection attempt failed: ${e.message}. Retrying in ${RECONNECT_RETRY_DELAY_MILLIS}ms..."
                     }
@@ -256,6 +292,12 @@ class BlueToothBleService constructor(
         aircraftChangeJob = null
         wifiModeChangeJob = null
         phonePressureJob = null
+        deviceSession = null
+        deviceActionScope.launch {
+            deviceActions.stop()
+            _status.update { it.copy(deviceControl = deviceActions.state.value) }
+            deviceActionScope.cancel()
+        }
 
         _status.update {
             it.copy(
@@ -295,6 +337,7 @@ class BlueToothBleService constructor(
     }
 
     fun requestAircraftChange(icaoAddress: Long) {
+        if (deviceActions.state.value.operation?.busy == true) return
         // Own the job before returning to Main, so a subsequent stop also
         // cancels commands which have not begun their Bluetooth write yet.
         val previous = aircraftChangeJob
@@ -370,6 +413,7 @@ class BlueToothBleService constructor(
     }
 
     fun requestWifiModeChange(mode: WifiMode) {
+        if (deviceActions.state.value.operation?.busy == true) return
         // Own the job before returning to Main, so a subsequent stop also
         // cancels commands which have not begun their Bluetooth write yet.
         val previous = wifiModeChangeJob
@@ -496,6 +540,8 @@ class BlueToothBleService constructor(
 
         val nmeaObservable = observableCharacteristic(peripheral, nmeaCharacteristic, "NMEA")
         val cobsObservable = observableCharacteristic(peripheral, cobsCharacteristic, "COBS")
+        val session = Any()
+        deviceSession = session
         _status.update {
             it.copy(
                 activeStream = buildList {
@@ -519,7 +565,12 @@ class BlueToothBleService constructor(
                 peripheral = peripheral,
                 nmeaObservable = nmeaObservable,
                 cobsObservable = cobsObservable,
+                deviceSession = session,
             )
+        }
+        deviceActions.connected(session) { bytes ->
+            sendResponse(peripheral, cobsCharacteristic, "COBS", bytes,
+                payloadStillValid = { deviceSession === session && connectedPeripheral === peripheral && _status.value.running })
         }
         return peripheral
     }
@@ -533,6 +584,7 @@ class BlueToothBleService constructor(
         peripheral: Peripheral,
         nmeaObservable: Characteristic?,
         cobsObservable: Characteristic?,
+        deviceSession: Any,
     ) {
         try {
             // Network round trips must not execute inside the BLE notification
@@ -546,13 +598,13 @@ class BlueToothBleService constructor(
             }
 
             if (nmeaObservable != null) {
-                connectionScope.launchCharacteristicObserver(peripheral, nmeaObservable, "NMEA", relayQueue)
+                connectionScope.launchCharacteristicObserver(peripheral, nmeaObservable, "NMEA", relayQueue, deviceSession)
             } else {
                 log.w { "NMEA characteristic is not notifiable; skipping observe()" }
             }
 
             if (cobsObservable != null) {
-                connectionScope.launchCharacteristicObserver(peripheral, cobsObservable, "COBS", relayQueue)
+                connectionScope.launchCharacteristicObserver(peripheral, cobsObservable, "COBS", relayQueue, deviceSession)
             } else {
                 log.w { "COBS characteristic is not notifiable; skipping observe()" }
             }
@@ -567,6 +619,7 @@ class BlueToothBleService constructor(
         characteristic: Characteristic,
         label: String,
         relayQueue: Channel<RelayWorkItem>,
+        deviceSession: Any,
     ) {
         launch {
             val protocol = if (label == "NMEA") BleFrameProtocol.Nmea else BleFrameProtocol.Cobs
@@ -597,7 +650,7 @@ class BlueToothBleService constructor(
                                     lastEvent = "$label frame received (${payload.size} bytes)"
                                 )
                             }
-                            handleFrame(peripheral, characteristic, label, payload, relayQueue)
+                            handleFrame(peripheral, characteristic, label, payload, relayQueue, deviceSession)
                         }
                     }
             } catch (e: Exception) {
@@ -613,8 +666,13 @@ class BlueToothBleService constructor(
         label: String,
         payload: ByteArray,
         relayQueue: Channel<RelayWorkItem>,
+        deviceSession: Any,
     ) {
         log.d { "Received $label BLE frame (${payload.size} bytes)" }
+        if (label == "COBS" && payload.size >= 2 && (payload[1].toInt() and 255) == DeviceActionCodec.RESPONSE_TYPE) {
+            deviceActions.receive(deviceSession, payload)
+            return
+        }
         maybeUpdateOwnshipConfiguration(label, payload)
         maybeBridgeGdl90Frame(label, payload)
 
@@ -715,6 +773,14 @@ class BlueToothBleService constructor(
                     lastEvent = "No UDP response"
                 )
             }
+            return
+        }
+
+        // The Internet relay is never an authority for local device actions.
+        // Reject the whole datagram if any concatenated COBS frame uses the
+        // reserved management types, before it can reach the BLE write path.
+        if (workItem.label == "COBS" && containsDeviceActionFrame(response)) {
+            log.w { "Discarding local device-action message received from the UDP relay" }
             return
         }
 
@@ -979,6 +1045,8 @@ class BlueToothBleService constructor(
             peripheral.maximumWriteValueLengthForType(WriteType.WithoutResponse)
         }.getOrDefault(framedPayload.size.coerceAtLeast(1))
 
+        // Relay traffic, barometer samples and device-action commands share
+        // this writer. Revalidate queued work after acquiring its packet lock.
         val sent = packetWriter.write(framedPayload, maxWriteSize,
             mayWrite = {
                 connectedPeripheral === peripheral && (_status.value.running || allowWhileStopping) && payloadStillValid()
@@ -1233,6 +1301,18 @@ class BlueToothBleService constructor(
 
 internal data class RelayDecision(val shouldRelay: Boolean, val messageType: Int?)
 
+internal fun containsDeviceActionFrame(payload: ByteArray): Boolean {
+    var start = 0
+    for (end in 0..payload.size) {
+        if (end == payload.size || payload[end] == 0.toByte()) {
+            if (end - start >= 2 && (payload[start + 1].toInt() and 255) in
+                listOf(DeviceActionCodec.REQUEST_TYPE, DeviceActionCodec.RESPONSE_TYPE)) return true
+            start = end + 1
+        }
+    }
+    return false
+}
+
 internal fun relayDecision(label: String, payload: ByteArray): RelayDecision {
     if (label != "COBS" || payload.size < 2 || (payload[0].toInt() and 0xff) < 2) {
         return RelayDecision(shouldRelay = false, messageType = null)
@@ -1242,7 +1322,7 @@ internal fun relayDecision(label: String, payload: ByteArray): RelayDecision {
     // Reading it directly keeps routing independent of the payload format and size.
     val type = payload[1].toInt() and 0xff
     return RelayDecision(
-        shouldRelay = type != MessageType.GDL90_V1.value,
+        shouldRelay = type !in listOf(MessageType.GDL90_V1.value, DeviceActionCodec.REQUEST_TYPE, DeviceActionCodec.RESPONSE_TYPE),
         messageType = type,
     )
 }

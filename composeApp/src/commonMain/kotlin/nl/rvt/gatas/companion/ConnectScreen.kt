@@ -116,7 +116,7 @@ fun ConnectScreen(
             onOpenGatasDetails = { hexCode -> gatasBrowserHexCode = hexCode },
             onOpenGatasSettings = { showGatasSettingsDialog = true },
             onChangeAircraft = { showAircraftDialog = true },
-            changeAircraftEnabled = ownshipConfiguration != null,
+            changeAircraftEnabled = ownshipConfiguration != null && bridgeStatus.deviceControl.operation?.busy != true,
         )
 
         LinkStatusCard(
@@ -172,6 +172,8 @@ fun ConnectScreen(
                 PhonePressureCard(device, bridgeStatus.bleConnected, bridgeStatus.phonePressure)
             }
         }
+
+        DeviceActionsButton(bridgeStatus, companionState.activeDevice?.identifier)
 
         Button(
             onClick = {
@@ -337,7 +339,7 @@ private fun GatasSettingsDialog(
 ) {
     val currentWifiMode = bridgeStatus.ownshipConfiguration?.wifiMode
     val pendingWifiMode = bridgeStatus.wifiModeChangeTarget
-    val wifiModeKnown = currentWifiMode == WifiMode.AP || currentWifiMode == WifiMode.CLIENT
+    val wifiModeKnown = (currentWifiMode == WifiMode.AP || currentWifiMode == WifiMode.CLIENT) && bridgeStatus.deviceControl.operation?.busy != true
     val showPendingSpinner = pendingWifiMode != null && pendingWifiMode != currentWifiMode
 
     Dialog(onDismissRequest = onDismiss) {

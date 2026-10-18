@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.StateFlow
 import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.GaTasDevice
 import nl.rvt.gatas.companion.services.BridgeStatus
+import nl.rvt.gatas.companion.services.DeviceActionCommand
 
 expect object BridgeBackgroundComponent {
     val status: StateFlow<BridgeStatus>
@@ -13,5 +14,6 @@ expect object BridgeBackgroundComponent {
     fun stop()
     fun requestAircraftChange(icaoAddress: Long)
     fun requestWifiModeChange(mode: WifiMode)
+    fun requestDeviceAction(command: DeviceActionCommand): Boolean
     fun requestPhonePressureChange(deviceId: String, enabled: Boolean)
 }

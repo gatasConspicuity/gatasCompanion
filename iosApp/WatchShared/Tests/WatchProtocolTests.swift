@@ -2,6 +2,19 @@ import XCTest
 @testable import WatchProtocol
 
 final class WatchProtocolTests: XCTestCase {
+    func testDeviceActionsKeepOldSnapshotsReadableAndCarryBootContext() throws {
+        XCTAssertNil(try WatchSnapshot.decode(encoded).deviceControl)
+        let extra = "\"deviceControl\":{\"checking\":false,\"capabilities\":7,\"bootId\":\"f102030405060708\",\"hasUnsavedChanges\":true,\"operation\":{\"id\":\"save-1\",\"action\":\"saveConfiguration\",\"phase\":\"preparing\",\"message\":\"Waiting\"}},\"version\":1"
+        let state = try WatchSnapshot.decode(encoded.replacingOccurrences(of: "\"version\":1", with: extra))
+        XCTAssertEqual(state.deviceControl?.bootId, "f102030405060708")
+        XCTAssertTrue(state.deviceControl?.supports(1) == true)
+        XCTAssertTrue(state.deviceControl?.supports(2) == true)
+        XCTAssertTrue(state.deviceControl?.operation?.busy == true)
+        let command = WatchCommand(action: "restartGatas", expectedDeviceId: "a", expectedBootId: state.deviceControl?.bootId)
+        let decoded = try JSONDecoder().decode(WatchCommand.self, from: Data(command.encoded().utf8))
+        XCTAssertEqual(decoded.expectedBootId, state.deviceControl?.bootId)
+        XCTAssertEqual(decoded.expectedDeviceId, "a")
+    }
     // Represents the Kotlin encoder's v1 snapshot, including explicit nulls.
     private let encoded = """
     {"version":1,"updatedAt":1000,"devices":[{"name":"GATAS","identifier":"a"}],
@@ -62,6 +75,14 @@ final class WatchProtocolTests: XCTestCase {
             isForeground: true, activitiesEnabled: false, startFailed: false), .disabled)
         XCTAssertEqual(LiveActivitySyncPolicy.action(bridgeRunning: true, hasActivity: false,
             isForeground: true, activitiesEnabled: true, startFailed: false), .start)
+    }
+
+    func testCorrelatedWatchResultSurvivesANewerPhoneActionInTheSnapshot() throws {
+        let extra = "\"deviceControl\":{\"checking\":false,\"capabilities\":7,\"bootId\":\"0102030405060708\",\"operation\":{\"id\":\"phone-save\",\"action\":\"saveConfiguration\",\"phase\":\"preparing\",\"message\":\"Waiting\"},\"recentResults\":[{\"id\":\"watch-save\",\"action\":\"saveConfiguration\",\"phase\":\"completed\",\"message\":\"Saved\"}]},\"version\":1"
+        let state = try WatchSnapshot.decode(encoded.replacingOccurrences(of: "\"version\":1", with: extra))
+        XCTAssertEqual(state.deviceControl?.result(for: "watch-save")?.phase, "completed")
+        XCTAssertNil(state.deviceControl?.result(for: "phone-save"))
+        XCTAssertNil(state.deviceControl?.result(for: "unknown"))
     }
 
     func testFailedStartWaitsUntilForegroundRetryReset() {

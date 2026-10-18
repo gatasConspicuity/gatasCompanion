@@ -12,6 +12,19 @@ import nl.rvt.gatas.companion.services.BridgeStatus
 import nl.rvt.gatas.companion.services.BridgeStatusReducer
 
 class RemoteProtocolTest {
+    @Test fun deviceActionsRequireCapabilitiesAndObservedBootAndExcludeUsbBoot() {
+        val control = nl.rvt.gatas.companion.services.DeviceControlState(capabilities = 7, bootId = "0102030405060708", hasUnsavedChanges = true)
+        val supported = connected.copy(bridge = connected.bridge.copy(deviceControl = control))
+        for (action in listOf("saveConfiguration", "restartGatas")) {
+            val request = command(action).copy(expectedBootId = control.bootId)
+            RemoteCommandPolicy.validate(request, supported)
+            assertFailsWith<IllegalArgumentException> { RemoteCommandPolicy.validate(request, connected) }
+            assertFailsWith<IllegalArgumentException> { RemoteCommandPolicy.validate(request.copy(expectedBootId = "old-boot"), supported) }
+            assertFailsWith<IllegalArgumentException> { RemoteCommandPolicy.validate(request.copy(expectedDeviceId = "another-device"), supported) }
+        }
+        assertFailsWith<IllegalStateException> { RemoteCommandPolicy.validate(command("usbBoot"), supported) }
+        assertFailsWith<IllegalStateException> { RemoteCommandPolicy.validate(command("enterFirmwareUpdateMode"), supported) }
+    }
     @Test fun gdl90SettingIsVisibleWithoutWaitingForAnotherPacket() {
         val enabled = BridgeStatusReducer.applyGdl90Setting(BridgeStatus(), true)
         assertEquals(true, enabled.gdl90.enabled)
@@ -19,6 +32,17 @@ class RemoteProtocolTest {
         val disabled = BridgeStatusReducer.applyGdl90Setting(enabled, false)
         assertEquals(false, disabled.gdl90.enabled)
         assertEquals(nl.rvt.gatas.companion.services.Gdl90State.Disabled, disabled.gdl90.state)
+    }
+
+    @Test fun deviceActionBlocksConfigurationChangesButKeepsStopAvailable() {
+        val busy = connected.copy(bridge = connected.bridge.copy(deviceControl =
+            nl.rvt.gatas.companion.services.DeviceControlState(capabilities = 7, bootId = "0102030405060708",
+                operation = nl.rvt.gatas.companion.services.DeviceOperation("save", "saveConfiguration", "executing", "Saving"))))
+        RemoteCommandPolicy.validate(command("stop"), busy)
+        for (request in listOf(command("setAircraft", aircraft = 456), command("setWifi", mode = "CLIENT"),
+            command("saveConfiguration"), command("restartGatas"))) {
+            assertFailsWith<IllegalArgumentException> { RemoteCommandPolicy.validate(request, busy) }
+        }
     }
 
     @Test fun wifiTimeoutClearsOnlyItsOwnPendingRequest() {

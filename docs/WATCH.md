@@ -133,10 +133,11 @@ app, grant Bluetooth access and complete any system prompts on the phone first.
 - Test system termination, explicit force quit and relaunch separately. If iOS
   cannot service a background request, the UI must show that it needs the phone.
 
-The GATAS website remains on the phone. Permanently saving GATAS configuration
-and entering USB firmware update mode are separate follow-up work in new branches
-in both repositories. Whether a runtime Wi-Fi mode should also survive a device
-reboot needs its own firmware specification.
+The GATAS website remains on the phone. With compatible firmware, Settings also
+offers Save configuration and Restart GATAS. USB firmware update mode is available
+only in the Companion app. See [Device actions](DEVICE_ACTIONS.md) for the
+protocol, confirmations and hardware acceptance checks. A runtime Wi-Fi mode
+remains temporary; saving does not change its boot policy.
 
 ## Validation notes (2026-10-16)
 
