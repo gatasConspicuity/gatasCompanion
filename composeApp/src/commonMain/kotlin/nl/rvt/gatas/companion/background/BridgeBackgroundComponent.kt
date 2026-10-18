@@ -13,4 +13,5 @@ expect object BridgeBackgroundComponent {
     fun stop()
     fun requestAircraftChange(icaoAddress: Long)
     fun requestWifiModeChange(mode: WifiMode)
+    fun requestPhonePressureChange(deviceId: String, enabled: Boolean)
 }

@@ -64,6 +64,12 @@ class GatasBridgeForegroundService : Service() {
             }
 
             ACTION_STOP -> stopSelf()
+            ACTION_PHONE_PRESSURE -> {
+                val identifier = intent.getStringExtra(EXTRA_IDENTIFIER)
+                if (identifier != null && identifier == currentDevice?.identifier) {
+                    bridgeService?.requestPhonePressureChange(identifier, intent.getBooleanExtra(EXTRA_PRESSURE_ENABLED, false))
+                }
+            }
             ACTION_CHANGE_ICAO -> {
                 val icaoAddress = intent.getLongExtra(EXTRA_ICAO_ADDRESS, -1L)
                 if (icaoAddress >= 0) {
@@ -200,6 +206,8 @@ class GatasBridgeForegroundService : Service() {
     companion object {
         private const val ACTION_START = "nl.rvt.gatas.companion.background.action.START"
         private const val ACTION_STOP = "nl.rvt.gatas.companion.background.action.STOP"
+        private const val ACTION_PHONE_PRESSURE = "nl.rvt.gatas.companion.background.action.PHONE_PRESSURE"
+        private const val EXTRA_PRESSURE_ENABLED = "phone_pressure_enabled"
         private const val ACTION_CHANGE_ICAO = "nl.rvt.gatas.companion.background.action.CHANGE_ICAO"
         private const val ACTION_CHANGE_WIFI_MODE = "nl.rvt.gatas.companion.background.action.CHANGE_WIFI_MODE"
         private const val EXTRA_IDENTIFIER = "extra_identifier"
@@ -230,6 +238,15 @@ class GatasBridgeForegroundService : Service() {
 
         fun stop(context: Context) {
             context.stopService(Intent(context, GatasBridgeForegroundService::class.java))
+        }
+
+        fun requestPhonePressureChange(context: Context, deviceId: String, enabled: Boolean) {
+            if (_activeDevice.value?.identifier != deviceId) return
+            context.startService(Intent(context, GatasBridgeForegroundService::class.java).apply {
+                action = ACTION_PHONE_PRESSURE
+                putExtra(EXTRA_IDENTIFIER, deviceId)
+                putExtra(EXTRA_PRESSURE_ENABLED, enabled)
+            })
         }
 
         fun requestAircraftChange(context: Context, icaoAddress: Long) {

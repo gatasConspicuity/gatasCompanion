@@ -73,6 +73,10 @@ import compose.icons.lineawesomeicons.CogSolid
 import nl.rvt.gatas.PlatformKeepScreenOnEffect
 import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.services.BridgeStatus
+import nl.rvt.gatas.companion.pressure.PhonePressureControls
+import nl.rvt.gatas.companion.pressure.PhonePressureStatus
+import nl.rvt.gatas.companion.pressure.PhonePressureSummary
+import nl.rvt.gatas.companion.pressure.PressureSensorCondition
 
 @Composable
 fun ConnectScreen(
@@ -163,6 +167,12 @@ fun ConnectScreen(
             Gdl90BridgeCard(status = bridgeStatus)
         }
 
+        if (bridgeStatus.phonePressure.enabled) {
+            companionState.activeDevice?.let { device ->
+                PhonePressureCard(device, bridgeStatus.bleConnected, bridgeStatus.phonePressure)
+            }
+        }
+
         Button(
             onClick = {
                 onStopBridge()
@@ -195,6 +205,7 @@ fun ConnectScreen(
     if (showGatasSettingsDialog) {
         GatasSettingsDialog(
             bridgeStatus = bridgeStatus,
+            device = companionState.activeDevice,
             onRequestWifiModeChange = CompanionController::changeWifiMode,
             onDismiss = { showGatasSettingsDialog = false },
         )
@@ -320,6 +331,7 @@ private fun ConnectionInfoCard(
 @Composable
 private fun GatasSettingsDialog(
     bridgeStatus: BridgeStatus,
+    device: GaTasDevice?,
     onRequestWifiModeChange: (WifiMode) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -342,6 +354,7 @@ private fun GatasSettingsDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -358,6 +371,10 @@ private fun GatasSettingsDialog(
                     OutlinedButton(onClick = onDismiss) {
                         Text("Close")
                     }
+                }
+
+                if (device != null) {
+                    PhonePressureControls(device, bridgeStatus.bleConnected, bridgeStatus.phonePressure)
                 }
 
                 Text(
@@ -853,6 +870,50 @@ private fun Gdl90BridgeCard(status: BridgeStatus) {
                     pulseTick = gdl90.activityTick,
                     active = active,
                     color = textColor,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhonePressureCard(device: GaTasDevice, connected: Boolean, status: PhonePressureStatus) {
+    val active = status.enabled && connected && !status.stale &&
+        status.condition == PressureSensorCondition.Available && status.packetsSent > 0
+    val activeColor = if (active) Color(0xFF57D48B) else MaterialTheme.colorScheme.onSurfaceVariant
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            ConnectionRoute(
+                leftEndpoint = RouteEndpoint(label = "Phone"),
+                rightEndpoint = RouteEndpoint(label = "GATAS"),
+                connected = active,
+                statusColor = activeColor,
+                packetCount = status.packetsSent,
+            )
+            PhonePressureSummary(device, connected, status)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ProtocolActivityIndicator(
+                    label = "Pressure",
+                    pulseTick = status.packetsSent,
+                    active = active,
+                    color = activeColor,
                 )
             }
         }

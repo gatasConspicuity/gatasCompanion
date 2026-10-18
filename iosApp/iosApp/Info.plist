@@ -32,6 +32,8 @@
 	<string>We need bluetooth to discover, connect to the GATAS conspicuity device.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>NSMotionUsageDescription</key>
+	<string>GATAS Companion reads your iPhone’s air pressure and sends it via Bluetooth to GATAS devices you enable this for. This lets GATAS calculate pressure altitude without an onboard pressure sensor.</string>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>nl.rvt.gatas.companion.show-live-activity</string>

@@ -4,6 +4,13 @@ This project is licensed under Apache License 2.0 with the Commons Clause licens
 
 GATAS Companion is the mobile companion app for the GATAS conspicuity device. It is a Kotlin Multiplatform app that runs on Android and iOS.
 
+The [phone barometer feature](doc/phone-pressure.md) sends ambient pressure to
+GATAS over Bluetooth as an alternative to an onboard BMP280. On iOS, enable
+**Use phone barometer** in the connected device's **GATAS Settings**. The choice
+is saved separately for each Bluetooth device. The feature and its diagnostic
+counters are available in Debug and Release builds on both platforms. Android
+hardware validation remains open for testers.
+
 The iOS app requires iOS 18 or newer and includes an Apple Watch remote control
 for watchOS 10 or newer. The paired iPhone handles the GATAS connection and traffic
 forwarding. See [Apple Watch setup, architecture and acceptance checks](docs/WATCH.md).

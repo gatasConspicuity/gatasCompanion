@@ -67,4 +67,8 @@ class BridgeBackgroundController(
     fun requestWifiModeChange(mode: WifiMode) {
         activeService?.requestWifiModeChange(mode)
     }
+
+    fun requestPhonePressureChange(deviceId: String, enabled: Boolean) {
+        if (currentDevice?.identifier == deviceId) activeService?.requestPhonePressureChange(deviceId, enabled)
+    }
 }

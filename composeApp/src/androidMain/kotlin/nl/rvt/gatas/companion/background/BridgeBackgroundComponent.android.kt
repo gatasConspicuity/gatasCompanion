@@ -23,4 +23,8 @@ actual object BridgeBackgroundComponent {
     actual fun requestWifiModeChange(mode: WifiMode) {
         GatasBridgeForegroundService.requestWifiModeChange(appContext, mode)
     }
+
+    actual fun requestPhonePressureChange(deviceId: String, enabled: Boolean) {
+        GatasBridgeForegroundService.requestPhonePressureChange(appContext, deviceId, enabled)
+    }
 }
