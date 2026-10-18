@@ -14,6 +14,7 @@
 		7555FF83242A565900829871 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF82242A565900829871 /* ContentView.swift */; };
 		A10000000000000000000011 /* GatasPropellerLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* GatasPropellerLiveActivityAttributes.swift */; };
 		A10000000000000000000012 /* GatasLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* GatasLiveActivityManager.swift */; };
+		A10000000000000000000016 /* GatasBridgeNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000007 /* GatasBridgeNotifications.swift */; };
 		A10000000000000000000013 /* GatasPropellerLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* GatasPropellerLiveActivityAttributes.swift */; };
 		A10000000000000000000014 /* GatasPropellerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* GatasPropellerLiveActivity.swift */; };
 		A10000000000000000000015 /* LiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A10000000000000000000006 /* LiveActivityExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -81,6 +82,7 @@
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A10000000000000000000001 /* GatasPropellerLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatasPropellerLiveActivityAttributes.swift; sourceTree = "<group>"; };
 		A10000000000000000000002 /* GatasLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatasLiveActivityManager.swift; sourceTree = "<group>"; };
+		A10000000000000000000007 /* GatasBridgeNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatasBridgeNotifications.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* GatasPropellerLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatasPropellerLiveActivity.swift; sourceTree = "<group>"; };
 		A10000000000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A10000000000000000000006 /* LiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -169,6 +171,7 @@
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				A10000000000000000000001 /* GatasPropellerLiveActivityAttributes.swift */,
 				A10000000000000000000002 /* GatasLiveActivityManager.swift */,
+				A10000000000000000000007 /* GatasBridgeNotifications.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
 			name = GatasCompanion;
@@ -378,6 +381,7 @@
 				7555FF83242A565900829871 /* ContentView.swift in Sources */,
 				A10000000000000000000011 /* GatasPropellerLiveActivityAttributes.swift in Sources */,
 				A10000000000000000000012 /* GatasLiveActivityManager.swift in Sources */,
+				A10000000000000000000016 /* GatasBridgeNotifications.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

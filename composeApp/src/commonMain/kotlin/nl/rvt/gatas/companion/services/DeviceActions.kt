@@ -117,7 +117,7 @@ class DeviceActionClient(
     private var sender: (suspend (ByteArray) -> Boolean)? = null
     private var probeJob: Job? = null
     private var operationJob: Job? = null
-    private var executeSubmitted = false
+    private var executeSession: Any? = null
     private var requestCounter = Random.nextLong(1, 0x1_0000_0000L).toUInt()
 
     suspend fun connected(session: Any, send: suspend (ByteArray) -> Boolean) = withContext(Dispatchers.Main) {
@@ -174,7 +174,7 @@ class DeviceActionClient(
         val session = token ?: return false
         if (command.action == DeviceAction.Status || current.operation?.busy == true ||
             !current.supports(command.action) || current.bootId != command.bootId) return false
-        executeSubmitted = false
+        executeSession = null
         setOperation(command, "preparing", "Waiting for GATAS to accept the action…")
         operationJob = scope.launch {
             val id = nextId()
@@ -193,7 +193,7 @@ class DeviceActionClient(
                 if (command.action == DeviceAction.Restart) "Restarting GATAS. Waiting for reconnection…" else "Waiting for GATAS confirmation…")
             // Only this matching Prepare reply permits Execute. Register the
             // waiter before writing so a fast Save response cannot be lost.
-            executeSubmitted = true
+            executeSession = session
             if (command.action == DeviceAction.Restart) {
                 val waiter = Pending(command.action, true, CompletableDeferred())
                 pending[id] = waiter
@@ -225,14 +225,25 @@ class DeviceActionClient(
         return true
     }
 
+    // Main-confined, like request(): preparing an action alone is not enough
+    // to explain a disconnect. Only an actually submitted Execute can do so.
+    fun expectsDisconnect(session: Any): Boolean {
+        val operation = state.value.operation
+        return token === session && executeSession === session && operation != null && when (operation.action) {
+            DeviceAction.Restart.wireName -> operation.busy
+            DeviceAction.UsbBoot.wireName -> operation.busy || operation.phase == "requested"
+            else -> false
+        }
+    }
+
     suspend fun disconnected(session: Any): Boolean = withContext(Dispatchers.Main) {
         if (token !== session) return@withContext false
+        val operation = state.value.operation
+        val usb = operation?.action == DeviceAction.UsbBoot.wireName && expectsDisconnect(session)
         token = null; sender = null; probeJob?.cancel()
         pending.values.forEach { it.reply.cancel() }; pending.clear()
-        val operation = state.value.operation
-        val usb = operation?.action == DeviceAction.UsbBoot.wireName && operation.busy && executeSubmitted
         val result = when {
-            usb -> operation.copy(phase = "requested", message = "Firmware mode requested. Check the USB drive on your computer.")
+            usb -> requireNotNull(operation).copy(phase = "requested", message = "Firmware mode requested. Check the USB drive on your computer.")
             operation?.busy == true && operation.action != DeviceAction.Restart.wireName ->
                 operation.copy(phase = "unknown", message = "Connection lost. Result unknown; refresh before trying again.")
             else -> operation
@@ -244,7 +255,7 @@ class DeviceActionClient(
     fun stop() {
         probeJob?.cancel(); operationJob?.cancel()
         pending.values.forEach { it.reply.cancel() }; pending.clear()
-        token = null; sender = null
+        token = null; sender = null; executeSession = null
         val operation = state.value.operation
         mutableState.value = DeviceControlState(recentResults = state.value.recentResults).withOperation(if (operation?.busy == true)
             operation.copy(phase = "unknown", message = "Bridge stopped. Check GATAS before repeating the action.") else operation)
