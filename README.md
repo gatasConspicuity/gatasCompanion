@@ -39,6 +39,13 @@ brew install ios-deploy
 5. Open `iosApp/GatasCompanion.xcodeproj` in Xcode. Select the **GatasCompanion**
    scheme for the iPhone app or **GatasWatchApp** for the paired Watch app.
 
+## TestFlight builds
+
+Archive and upload through Xcode Organizer. Let Xcode manage the build number
+during distribution, and include the source commit and English change summary
+in TestFlight's "What to Test" information. See the
+[development and TestFlight workflow](docs/DEVELOPMENT.md) for the steps.
+
 ## Prebuild artifacts (commit to git if you want)
 
 This creates commit-friendly artifacts in `./prebuilt`:
