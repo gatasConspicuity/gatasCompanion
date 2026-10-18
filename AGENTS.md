@@ -50,11 +50,19 @@
   iPhone app, Watch app, and Live Activity extension must share the same build
   number. The central project configuration is
   `iosApp/Configuration/Config.xcconfig`.
-- Keep `CURRENT_PROJECT_VERSION=1` as the local build-number baseline. Do not
-  encode a date in this value or manually increment it for TestFlight uploads.
-- Archive and upload through Xcode Organizer, using its build-number management
-  during distribution. Record the actual uploaded build number, which may differ
-  from the value in the checked-out project.
+- Before each new TestFlight upload, check the highest build number already
+  used for the app version in App Store Connect and coordinate numbers reserved
+  by other active branches. Manually set `CURRENT_PROJECT_VERSION` in the shared
+  configuration to a higher number, normally the highest number plus one.
+- Do not reset the build number to `1` or derive the next number from local
+  archives alone. Use a monotonically increasing numeric counter, not a date.
+- Commit the selected build number with the intended source changes before
+  archiving. Changing source configuration does not change an archive that has
+  already been created.
+- Archive through Xcode Organizer and upload using **Distribute App** >
+  **Custom** > **App Store Connect** > **Upload**, with **Manage version and build
+  number** disabled. Confirm that the archive, distribution summary and uploaded
+  build use the committed number. Automatic signing is a separate setting.
 - Include the full source commit and an English change summary in TestFlight's
   "What to Test" information. Obtain them from the intended build revision with
   `git log -1 --format='Commit: %H%nChanges: %s'`.

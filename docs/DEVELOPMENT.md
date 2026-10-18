@@ -41,29 +41,50 @@ deletions, or publication without the corresponding user instruction.
 Use the existing Xcode workflow for archiving and uploading. No separate build
 or upload script is required.
 
-1. Check out the branch or commit intended for this test build and commit all
-   source changes before archiving.
-2. Open `iosApp/GatasCompanion.xcodeproj`, select the `GatasCompanion` scheme
+1. Check out the branch intended for this test build. In App Store Connect,
+   check the highest build number already used for the app version. Coordinate
+   numbers reserved for uploads from other active branches as well; local
+   archives and the current branch alone are not an authoritative counter.
+2. Manually set `CURRENT_PROJECT_VERSION` in
+   `iosApp/Configuration/Config.xcconfig` to a higher number, normally the highest
+   used or reserved number plus one. Use a numeric counter rather than a date,
+   and do not reset it to `1`. The iPhone app, Watch app and Live Activity
+   extension all inherit this value; do not add target-specific overrides.
+3. Commit the selected build number and all intended source changes before
+   archiving. Record the full source commit and branch for the build.
+4. Open `iosApp/GatasCompanion.xcodeproj`, select the `GatasCompanion` scheme
    and a suitable device destination, and choose **Product > Archive**.
-3. In Xcode Organizer, select the archive and choose **Distribute App**.
-   Use **TestFlight & App Store**. If using the Custom App Store Connect
-   distribution flow, enable **Manage version and build number**.
-4. Allow Xcode to manage the build number during distribution. The uploaded
-   build number can differ from `CURRENT_PROJECT_VERSION` in the checkout.
-   Record the actual number shown in App Store Connect with the source commit.
-5. Add English testing instructions and the source commit to the build's
+5. In Xcode Organizer, select the new archive and check its version and build
+   number. Choose **Distribute App** > **Custom** > **App Store Connect** >
+   **Upload**. Disable **Manage version and build number** to preserve the
+   committed number. Automatic signing can remain enabled; it is independent
+   of build-number management.
+6. Before confirming the upload, verify that the distribution summary uses the
+   selected build number. After processing, confirm the same number in App Store
+   Connect and record it with the version, full source commit and branch.
+7. Add English testing instructions and the source commit to the build's
    **What to Test** information, then manage tester groups in App Store Connect.
+
+Changing `CURRENT_PROJECT_VERSION` only affects subsequent builds. An existing
+archive retains its original number, so create a new archive after a manual
+increase. A retry of the exact same unused build does not itself require another
+increase; a number App Store Connect reports as already used must be replaced.
+
+This workflow uses manual numbering because Xcode 27 uploaded build `1` unchanged
+with **Manage version and build number** enabled and App Store Connect rejected
+it as **Redundant Binary Upload** (error `90189`). The standalone **Validate App**
+flow failed with the same number. The cause of the missing automatic adjustment
+has not been established; a different distribution entry point is not a
+verified fix.
 
 The visible app version remains a deliberate release choice. Its central
 setting is `MARKETING_VERSION` in `iosApp/Configuration/Config.xcconfig`.
 Keep the iPhone, Watch, and Live Activity versions consistent.
 
-`CURRENT_PROJECT_VERSION=1` is the shared local build-number baseline. Keep
-this value in the configuration so local builds and archives have a valid
-`CFBundleVersion`. It does not encode a date and does not need a manual bump
-before each upload. Xcode's distribution assistant manages the uploaded number.
-Existing TestFlight numbers are not reset: when the current app version already
-has higher uploaded numbers, Xcode selects a valid higher number as needed.
+`CURRENT_PROJECT_VERSION` is the shared manually maintained build number and
+supplies `CFBundleVersion`. Keep it consistent across the three Apple targets
+and across branches used for uploads. The uploaded number should match the
+committed source configuration and the archive.
 
 ## TestFlight Notes
 

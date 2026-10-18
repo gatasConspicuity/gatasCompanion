@@ -8,9 +8,10 @@ WATCHOS_DEPLOYMENT_TARGET=10.0
 // The Kotlin framework provides an Apple silicon simulator slice only.
 EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64
 MARKETING_VERSION=1.0.0
-// Local build-number baseline shared by iPhone, Watch and Live Activity.
-// Xcode manages the upload build number during distribution.
-CURRENT_PROJECT_VERSION=1
+// Shared build number for iPhone, Watch and Live Activity.
+// Manually increase before a new TestFlight upload; see docs/DEVELOPMENT.md.
+// Disable Xcode's "Manage version and build number" during distribution.
+CURRENT_PROJECT_VERSION=2
 
 // Keep signing overrides in a local, ignored file.
 // Copy Config.local.xcconfig.example to Config.local.xcconfig and set TEAM_ID there.

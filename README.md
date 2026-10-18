@@ -41,9 +41,12 @@ brew install ios-deploy
 
 ## TestFlight builds
 
-Archive and upload through Xcode Organizer. Let Xcode manage the build number
-during distribution, and include the source commit and English change summary
-in TestFlight's "What to Test" information. See the
+Before each new TestFlight upload, manually increase the shared build number in
+`iosApp/Configuration/Config.xcconfig` above the highest number already used in
+App Store Connect. Commit the intended source and build number before creating
+a new archive. Upload through Xcode Organizer's Custom App Store Connect flow
+with **Manage version and build number** disabled, and include the source commit
+and English change summary in TestFlight's "What to Test" information. See the
 [development and TestFlight workflow](docs/DEVELOPMENT.md) for the steps.
 
 ## Prebuild artifacts (commit to git if you want)
