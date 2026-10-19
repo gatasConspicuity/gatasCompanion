@@ -8,9 +8,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import nl.rvt.gatas.companion.gatasSuccessColor
 import nl.rvt.gatas.companion.GaTasDevice
 import nl.rvt.gatas.companion.background.BridgeBackgroundComponent
 import kotlin.math.roundToInt
@@ -52,7 +52,7 @@ private fun PhonePressureStatusMessage(connected: Boolean, status: PhonePressure
         status.condition == PressureSensorCondition.Error ||
             status.condition == PressureSensorCondition.PermissionDenied ||
             status.condition == PressureSensorCondition.Unavailable || status.stale -> MaterialTheme.colorScheme.error
-        status.condition == PressureSensorCondition.Available && status.packetsSent > 0 -> Color(0xFF57D48B)
+        status.condition == PressureSensorCondition.Available && status.packetsSent > 0 -> gatasSuccessColor()
         else -> mutedColor
     }
     Text(text = when {

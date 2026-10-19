@@ -9,104 +9,53 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
+val GatasNavy = Color(0xFF0B2239)
+val GatasBlue = Color(0xFF1494DF)
+val GatasDanger = Color(0xFFC73B45)
 
-// Usage suggestions:
-// - AviationBlue: Primary buttons, interactive elements
-// - AviationDarkBlue: Headers, navigation bar
-// - AviationLightGrey: Backgrounds, cards
-// - AviationDarkGrey: Text, borders
-// - AviationWarning: Caution indicators
-// - AviationSuccess: Confirmation states
-// - AviationError: Error messages, destructive actions
-
-// 🎨 Colors
-private val AviationBlue = Color(0xFF0A84FF)       // Bright sky blue
-private val AviationDarkBlue = Color(0xFF0047AB)    // Deep navy blue
-private val AviationLightGrey = Color(0xFFF0F4F8)   // Very light cool grey
-private val AviationDarkGrey = Color(0xFF1C1C1E)    // Near-black grey
-private val AviationWarning = Color(0xFFFFC107)     // Amber/yellow
-private val AviationSuccess = Color(0xFF4CAF50)     // Green
-private val AviationError = Color(0xFFCF6679)       // Soft red/pink
-
+// Darker button blue preserves contrast with white labels; GatasBlue is the brand accent.
 private val LightColors = lightColorScheme(
-    primary = AviationBlue,
-    onPrimary = Color.White,
-    primaryContainer = AviationLightGrey,
-    onPrimaryContainer = AviationDarkBlue,
-    secondary = AviationDarkBlue,
-    onSecondary = Color.White,
-    background = AviationLightGrey,
-    onBackground = Color.Black,
-    surface = Color.White,
-    onSurface = Color.Black,
-    error = AviationError,
-    onError = Color.White
+    primary = Color(0xFF0878B5), onPrimary = Color.White,
+    primaryContainer = Color(0xFFDDEFFC), onPrimaryContainer = GatasNavy,
+    secondary = GatasNavy, onSecondary = Color.White,
+    secondaryContainer = Color(0xFFDDEFFC), onSecondaryContainer = GatasNavy,
+    background = Color(0xFFF5F8FB), onBackground = GatasNavy,
+    surface = Color(0xFFF9FCFE), onSurface = GatasNavy,
+    surfaceContainer = Color(0xFFEFF5F9), surfaceContainerLow = Color(0xFFF2F8FC),
+    surfaceContainerHighest = Color(0xFFE8F2F8), onSurfaceVariant = Color(0xFF526575),
+    outline = Color(0xFF788C9C), outlineVariant = Color(0xFFCFDEE8),
+    error = GatasDanger, onError = Color.White,
 )
 
 private val DarkColors = darkColorScheme(
-    primary = AviationDarkBlue,
-    onPrimary = Color.White,
-    primaryContainer = AviationDarkGrey,
-    onPrimaryContainer = AviationBlue,
-    secondary = AviationBlue,
-    onSecondary = Color.Black,
-    background = AviationDarkGrey,
-    onBackground = Color.White,
-    surface = AviationDarkGrey,
-    onSurface = Color.White,
-    error = AviationError,
-    onError = Color.Black
+    primary = Color(0xFF55C2FF), onPrimary = GatasNavy,
+    primaryContainer = Color(0xFF143B56), onPrimaryContainer = Color(0xFFDDEFFC),
+    secondary = Color(0xFF91D6FF), onSecondary = GatasNavy,
+    secondaryContainer = Color(0xFF143B56), onSecondaryContainer = Color(0xFFDDEFFC),
+    background = Color(0xFF0C1722), onBackground = Color(0xFFE4EDF4),
+    surface = Color(0xFF111F2D), onSurface = Color(0xFFE4EDF4),
+    surfaceContainer = Color(0xFF142534), surfaceContainerLow = Color(0xFF152838),
+    surfaceContainerHighest = Color(0xFF203748), onSurfaceVariant = Color(0xFFADBFCC),
+    outline = Color(0xFF8197A7), outlineVariant = Color(0xFF304B60),
+    error = Color(0xFFFF929B), onError = Color(0xFF4A1018),
 )
 
-// 🔤 Typography
-private val AviationTypography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 48.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 24.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp
-    )
-)
-
-// 🟰 Shapes
-private val AviationShapes = Shapes(
-    small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(12.dp),
-    large = RoundedCornerShape(16.dp)
-)
-
-// 🎨🚀 Full App Theme
 @Composable
-fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
-    val colors = if (darkTheme) DarkColors else LightColors
+fun gatasSuccessColor(): Color = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) Color(0xFF36D399) else Color(0xFF16845B)
 
+@Composable
+fun AppTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = colors,
-        typography = AviationTypography,
-        shapes = AviationShapes,
-        content = content
+        colorScheme = if (darkTheme) DarkColors else LightColors,
+        typography = Typography(),
+        shapes = Shapes(
+            extraSmall = RoundedCornerShape(8.dp), small = RoundedCornerShape(12.dp),
+            medium = RoundedCornerShape(12.dp), large = RoundedCornerShape(16.dp),
+            extraLarge = RoundedCornerShape(16.dp),
+        ),
+        content = content,
     )
 }

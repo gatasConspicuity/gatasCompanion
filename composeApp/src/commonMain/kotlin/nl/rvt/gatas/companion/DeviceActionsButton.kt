@@ -36,10 +36,11 @@ fun DeviceActionsButton(status: BridgeStatus, deviceId: String?) {
         status.aircraftChangeTargetIcaoAddress == null && status.wifiModeChangeTarget == null
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
+            shape = MaterialTheme.shapes.medium,
             onClick = { menuTarget = DeviceActionsTarget(deviceId, control.bootId) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         ) {
-            Text("Device actions")
+            Text("Device Actions")
         }
         // Keep feedback visible after selecting an action closes the menu.
         control.operation?.let { operation ->
@@ -64,7 +65,7 @@ fun DeviceActionsButton(status: BridgeStatus, deviceId: String?) {
         }
         AlertDialog(
             onDismissRequest = { menuTarget = null },
-            title = { Text("Device actions") },
+            title = { Text("Device Actions") },
             text = {
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -80,16 +81,19 @@ fun DeviceActionsButton(status: BridgeStatus, deviceId: String?) {
                         else -> "GATAS configuration is saved"
                     })
                     OutlinedButton(
+                        shape = MaterialTheme.shapes.medium,
                         onClick = { select(DeviceAction.Save) },
                         enabled = menuAvailable && control.supports(DeviceAction.Save),
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     ) { Text("Save configuration") }
                     OutlinedButton(
+                        shape = MaterialTheme.shapes.medium,
                         onClick = { select(DeviceAction.Restart) },
                         enabled = menuAvailable && control.supports(DeviceAction.Restart),
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     ) { Text("Restart GATAS") }
                     OutlinedButton(
+                        shape = MaterialTheme.shapes.medium,
                         onClick = { select(DeviceAction.UsbBoot) },
                         enabled = menuAvailable && control.supports(DeviceAction.UsbBoot) && control.hasUnsavedChanges != null,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),

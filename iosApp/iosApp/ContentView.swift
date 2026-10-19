@@ -13,7 +13,7 @@ struct ComposeView: UIViewControllerRepresentable {
 struct ContentView: View {
     var body: some View {
         ComposeView()
-            .ignoresSafeArea(.keyboard) // Compose has own keyboard handler
+            .ignoresSafeArea() // Compose applies safe drawing and keyboard insets.
             .onContinueUserActivity(CompanionHandoff.showLiveActivity) { _ in
                 // Handoff brings the person here through the system UI. Read
                 // the live bridge state; never restart a bridge from old data.

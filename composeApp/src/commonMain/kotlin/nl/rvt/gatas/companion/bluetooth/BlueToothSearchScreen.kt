@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.Bluetooth
+import nl.rvt.gatas.companion.GatasCard
 import nl.rvt.gatas.companion.GaTasDevice
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -42,7 +41,6 @@ fun BlueToothSearchScreen(
     scannerViewModel: BleScannerViewModel = viewModel { BleScannerViewModel() },
 
     onItemClicked: (GaTasDevice: GaTasDevice) -> Unit,
-    onClose: () -> Unit = {},
 ) {
     val discovery by scannerViewModel.discovery.collectAsState()
 
@@ -111,13 +109,11 @@ private fun DeviceButton(
     item: GaTasDevice,
     onClicked: () -> Unit
 ) {
-    Card(
+    GatasCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable(onClick = onClicked),
-        shape = MaterialTheme.shapes.large,
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            .clickable(onClick = onClicked)
     ) {
         Row(
             modifier = Modifier
@@ -138,14 +134,14 @@ private fun DeviceButton(
                 Text(
                     text = item.name,
                     style = MaterialTheme.typography.titleLarge,
-                    maxLines = 1,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = item.identifier,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
             }

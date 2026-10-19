@@ -35,16 +35,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,57 +65,61 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import compose.icons.LineAwesomeIcons
-import compose.icons.lineawesomeicons.CogSolid
-import nl.rvt.gatas.PlatformKeepScreenOnEffect
 import nl.rvantwisk.gatas.lib.models.WifiMode
 import nl.rvt.gatas.companion.services.BridgeStatus
 import nl.rvt.gatas.companion.pressure.PhonePressureControls
 import nl.rvt.gatas.companion.pressure.PhonePressureStatus
 import nl.rvt.gatas.companion.pressure.PhonePressureSummary
-import nl.rvt.gatas.companion.pressure.PressureSensorCondition
 
 @Composable
-fun ConnectScreen(
-    bridgeStatus: BridgeStatus,
-    onBack: () -> Unit,
-    onStopBridge: () -> Unit,
-) {
-    val scrollState = rememberScrollState()
+fun ConnectScreen(state: CompanionState, onConnectionInfo: () -> Unit) {
+    val bridgeStatus = state.bridge
     var showAircraftDialog by remember { mutableStateOf(false) }
-    var showGatasSettingsDialog by remember { mutableStateOf(false) }
     var gatasBrowserHexCode by remember { mutableStateOf<String?>(null) }
     val ownshipConfiguration = bridgeStatus.ownshipConfiguration
-    val companionState by CompanionController.state.collectAsState()
-    val aircraftPickerEntries = companionState.aircraft
-    val aircraftPickerLoading = companionState.aircraftLoading
-    val aircraftPickerError = companionState.aircraftError
 
-    PlatformKeepScreenOnEffect()
     LaunchedEffect(showAircraftDialog) {
         if (showAircraftDialog) CompanionController.refreshAircraft()
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ConnectionInfoCard(
-            gatasHexCode = bridgeStatus.ownshipConfiguration?.gatasId?.toHexId()
-                ?: UNAVAILABLE_GATAS_ID,
-            selectedAircraftCallsign = currentSelectedAircraftCallsign(
-                ownshipConfiguration = bridgeStatus.ownshipConfiguration,
-                aircraftPickerEntries = aircraftPickerEntries,
-            ),
-            onOpenGatasDetails = { hexCode -> gatasBrowserHexCode = hexCode },
-            onOpenGatasSettings = { showGatasSettingsDialog = true },
+            gatasHexCode = ownshipConfiguration?.gatasId?.toHexId() ?: UNAVAILABLE_GATAS_ID,
+            bluetoothName = state.activeDevice?.name ?: "Unavailable",
+            selectedAircraftCallsign = currentSelectedAircraftCallsign(ownshipConfiguration, state.aircraft),
+            onOpenGatasDetails = { gatasBrowserHexCode = it },
             onChangeAircraft = { showAircraftDialog = true },
             changeAircraftEnabled = ownshipConfiguration != null && bridgeStatus.deviceControl.operation?.busy != true,
         )
+        ConnectionSummaryCard(bridgeStatus, onConnectionInfo)
+        DeviceActionsButton(bridgeStatus, state.activeDevice?.identifier)
+    }
 
+    if (showAircraftDialog) {
+        AircraftSelectionDialog(
+            entries = state.aircraft,
+            loading = state.aircraftLoading,
+            loadError = state.aircraftError,
+            selectedIcaoAddress = ownshipConfiguration?.icaoAddress,
+            pendingIcaoAddress = bridgeStatus.aircraftChangeTargetIcaoAddress,
+            onSelectAircraft = CompanionController::changeAircraft,
+            onDismiss = { showAircraftDialog = false },
+        )
+    }
+    gatasBrowserHexCode?.let { hexCode ->
+        GatasBrowserDialog(hexCode, onDismiss = { gatasBrowserHexCode = null })
+    }
+}
+
+@Composable
+fun ConnectionDetailsScreen(bridgeStatus: BridgeStatus, device: GaTasDevice?) {
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         LinkStatusCard(
             leftEndpoint = RouteEndpoint(
                 label = "GATAS",
@@ -168,56 +169,11 @@ fun ConnectScreen(
         }
 
         if (bridgeStatus.phonePressure.enabled) {
-            companionState.activeDevice?.let { device ->
-                PhonePressureCard(device, bridgeStatus.bleConnected, bridgeStatus.phonePressure)
+            device?.let { activeDevice ->
+                PhonePressureCard(activeDevice, bridgeStatus.bleConnected, bridgeStatus.phonePressure)
             }
         }
 
-        DeviceActionsButton(bridgeStatus, companionState.activeDevice?.identifier)
-
-        Button(
-            onClick = {
-                onStopBridge()
-                onBack()
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFF44336),
-                contentColor = Color.White
-            ),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Stop bridge")
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-    }
-
-    if (showAircraftDialog) {
-        AircraftSelectionDialog(
-            entries = aircraftPickerEntries,
-            loading = aircraftPickerLoading,
-            loadError = aircraftPickerError,
-            selectedIcaoAddress = ownshipConfiguration?.icaoAddress,
-            pendingIcaoAddress = bridgeStatus.aircraftChangeTargetIcaoAddress,
-            onSelectAircraft = CompanionController::changeAircraft,
-            onDismiss = { showAircraftDialog = false },
-        )
-    }
-
-    if (showGatasSettingsDialog) {
-        GatasSettingsDialog(
-            bridgeStatus = bridgeStatus,
-            device = companionState.activeDevice,
-            onRequestWifiModeChange = CompanionController::changeWifiMode,
-            onDismiss = { showGatasSettingsDialog = false },
-        )
-    }
-
-    gatasBrowserHexCode?.let { hexCode ->
-        GatasBrowserDialog(
-            hexCode = hexCode,
-            onDismiss = { gatasBrowserHexCode = null },
-        )
     }
 }
 
@@ -241,97 +197,38 @@ private fun currentSelectedAircraftCallsign(
 @Composable
 private fun ConnectionInfoCard(
     gatasHexCode: String,
+    bluetoothName: String,
     selectedAircraftCallsign: String,
     onOpenGatasDetails: (String) -> Unit,
-    onOpenGatasSettings: () -> Unit,
     onChangeAircraft: () -> Unit,
     changeAircraftEnabled: Boolean,
 ) {
-    val gatasHexCodeAvailable = gatasHexCode != UNAVAILABLE_GATAS_ID
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+    val available = gatasHexCode != UNAVAILABLE_GATAS_ID
+    GatasCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("GATAS ID", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            androidx.compose.material3.TextButton(
+                onClick = { onOpenGatasDetails(gatasHexCode) }, enabled = available,
+                modifier = Modifier.heightIn(min = 48.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 0.dp),
             ) {
-                Text(
-                    text = "GATAS ID",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onOpenGatasSettings) {
-                        Icon(
-                            imageVector = LineAwesomeIcons.CogSolid,
-                            contentDescription = "GATAS settings",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    Text(
-                        text = gatasHexCode,
-                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
-                        fontWeight = FontWeight.Bold,
-                        color = if (gatasHexCodeAvailable) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        textDecoration = if (gatasHexCodeAvailable) {
-                            TextDecoration.Underline
-                        } else {
-                            TextDecoration.None
-                        },
-                        modifier = Modifier.clickable(
-                            enabled = gatasHexCodeAvailable,
-                            onClick = { onOpenGatasDetails(gatasHexCode) },
-                        )
-                    )
-                }
+                Text(gatasHexCode, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
+                    textDecoration = if (available) TextDecoration.Underline else TextDecoration.None)
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Registration",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                OutlinedButton(
-                    onClick = onChangeAircraft,
-                    enabled = changeAircraftEnabled,
-                ) {
-                    Text(
-                        text = selectedAircraftCallsign,
-                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
+            Text("GATAS Bluetooth Name", style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(bluetoothName, style = MaterialTheme.typography.titleMedium)
+            Text("Registration", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedButton(
+                onClick = onChangeAircraft, enabled = changeAircraftEnabled,
+                modifier = Modifier.heightIn(min = 48.dp), shape = MaterialTheme.shapes.medium,
+            ) { Text(selectedAircraftCallsign, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
         }
     }
 }
 
 @Composable
-private fun GatasSettingsDialog(
+fun GatasSettingsDialog(
     bridgeStatus: BridgeStatus,
     device: GaTasDevice?,
     onRequestWifiModeChange: (WifiMode) -> Unit,
@@ -347,11 +244,11 @@ private fun GatasSettingsDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 480.dp),
-            shape = RoundedCornerShape(28.dp),
+            shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 20.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -370,7 +267,7 @@ private fun GatasSettingsDialog(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
-                    OutlinedButton(onClick = onDismiss) {
+                    OutlinedButton(onClick = onDismiss, shape = MaterialTheme.shapes.medium) {
                         Text("Close")
                     }
                 }
@@ -460,7 +357,7 @@ private fun GatasSettingsDialog(
                         Text(
                             text = statusMessage,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFF2E7D32)
+                            color = gatasSuccessColor()
                         )
                     }
                 }
@@ -489,11 +386,11 @@ private fun GatasBrowserDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 760.dp),
-            shape = RoundedCornerShape(28.dp),
+            shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 20.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -511,7 +408,7 @@ private fun GatasBrowserDialog(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
-                    OutlinedButton(onClick = onDismiss) {
+                    OutlinedButton(onClick = onDismiss, shape = MaterialTheme.shapes.medium) {
                         Text("Back")
                     }
                 }
@@ -548,11 +445,11 @@ private fun AircraftSelectionDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 680.dp),
-            shape = RoundedCornerShape(28.dp),
+            shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 20.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -570,7 +467,7 @@ private fun AircraftSelectionDialog(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
-                    OutlinedButton(onClick = onDismiss) {
+                    OutlinedButton(onClick = onDismiss, shape = MaterialTheme.shapes.medium) {
                         Text("Close")
                     }
                 }
@@ -633,10 +530,10 @@ private fun AircraftPickerCard(
     pending: Boolean,
     onClick: () -> Unit,
 ) {
-    val backgroundTint = if (selected) Color(0xFFE9FADF) else MaterialTheme.colorScheme.surface
+    val backgroundTint = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
     val borderColor = when {
         pending -> MaterialTheme.colorScheme.primary
-        selected -> Color(0xFF0F9D2A)
+        selected -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)
     }
 
@@ -647,11 +544,11 @@ private fun AircraftPickerCard(
             .border(
                 width = if (selected) 2.dp else 1.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(18.dp)
+                shape = MaterialTheme.shapes.large
             ),
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = backgroundTint),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Box(
             modifier = Modifier
@@ -740,16 +637,17 @@ private fun LinkStatusCard(
     totalPackets: Long,
     diagnosticsText: String? = null,
 ) {
-    val activeColor = if (connected) Color(0xFF57D48B) else Color(0xFFF44336)
+    val activeColor = if (connected) gatasSuccessColor() else MaterialTheme.colorScheme.error
     val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -807,16 +705,17 @@ private fun LinkStatusCard(
 @Composable
 private fun Gdl90BridgeCard(status: BridgeStatus) {
     val gdl90 = status.gdl90
-    val active = gdl90.packetsSent > 0 && gdl90.lastError == null
-    val textColor = if (active) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant
+    val active = gdl90IsActive(status)
+    val textColor = if (active) gatasSuccessColor() else MaterialTheme.colorScheme.onSurfaceVariant
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -880,17 +779,17 @@ private fun Gdl90BridgeCard(status: BridgeStatus) {
 
 @Composable
 private fun PhonePressureCard(device: GaTasDevice, connected: Boolean, status: PhonePressureStatus) {
-    val active = status.enabled && connected && !status.stale &&
-        status.condition == PressureSensorCondition.Available && status.packetsSent > 0
-    val activeColor = if (active) Color(0xFF57D48B) else MaterialTheme.colorScheme.onSurfaceVariant
+    val active = phonePressureIsActive(connected, status)
+    val activeColor = if (active) gatasSuccessColor() else MaterialTheme.colorScheme.onSurfaceVariant
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier

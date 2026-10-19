@@ -15,6 +15,21 @@ The iOS app requires iOS 18 or newer and includes an Apple Watch remote control
 for watchOS 10 or newer. The paired iPhone handles the GATAS connection and traffic
 forwarding. See [Apple Watch setup, architecture and acceptance checks](docs/WATCH.md).
 
+## App navigation
+
+Home shows saved GATAS devices. Use **Find GATAS** to discover another device,
+or select a saved device to start the bridge. **Settings** contains the GDL90
+bridge preference. **About** includes project and license links and the version
+and build number of the installed app.
+
+The connected overview shows the device identity and a compact **Connection
+Info** card. Tap that card to open the detailed connection counters and live
+measurements; **Back** returns to the overview without stopping the bridge.
+Green markers indicate active connections or forwarding, red markers indicate
+waiting or errors, and gray markers identify disabled optional features.
+Use the gear at the top left for **GATAS Settings**, **Device Actions** for
+supported device commands, and **STOP** at the top right to end the bridge.
+
 ## Reality check for cross-platform signing
 
 - Android: prebuild on one machine, then sign + deploy from macOS or Windows is supported.
