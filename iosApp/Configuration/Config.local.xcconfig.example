@@ -1,4 +1,8 @@
 // Local signing overrides for iOS development.
-// Copy this file to Config.local.xcconfig and replace the placeholder Team ID.
+// Copy this file to Config.local.xcconfig and replace the placeholders for TEAM_ID and BUNDLE_ID.
 
-TEAM_ID=YOUR_TEAM_ID_HERE
+TEAM_ID=YOUR_PERSONAL_TEAM_ID_HERE
+BUNDLE_ID=YOUR_PERSONAL_BUNDLE_ID_HERE
+APP_NAME=GatasCompanion
+PRODUCT_BUNDLE_IDENTIFIER=$(BUNDLE_ID)
+DEVELOPMENT_TEAM=$(TEAM_ID)
