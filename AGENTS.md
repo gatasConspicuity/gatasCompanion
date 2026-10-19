@@ -60,11 +60,13 @@
   archiving. Changing source configuration does not change an archive that has
   already been created.
 - Archive through Xcode Organizer and upload using **Distribute App** >
-  **Custom** > **App Store Connect** > **Upload**, with **Manage version and build
-  number** disabled. Confirm that the archive, distribution summary and uploaded
-  build use the committed number. Automatic signing is a separate setting.
-- Include the full source commit and an English change summary in TestFlight's
-  "What to Test" information. Obtain them from the intended build revision with
+  **App Store Connect** > **Upload**. Increase the build number manually before
+  archiving as described above. Confirm that the archive, distribution summary
+  and uploaded build use the committed number. Automatic signing is a separate
+  setting.
+- For TestFlight builds distributed by the GATAS Companion team, include the
+  full source commit and an English change summary in "What to Test". Obtain
+  them from the intended build revision with
   `git log -1 --format='Commit: %H%nChanges: %s'`.
 - Report automated checks separately from physical device testing. Successful
   simulator tests or builds do not replace acceptance testing on physical

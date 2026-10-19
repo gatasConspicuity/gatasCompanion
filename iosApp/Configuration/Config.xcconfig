@@ -10,7 +10,7 @@ EXCLUDED_ARCHS[sdk=iphonesimulator*]=x86_64
 MARKETING_VERSION=1.0.0
 // Shared build number for iPhone, Watch and Live Activity.
 // Manually increase before a new TestFlight upload; see docs/DEVELOPMENT.md.
-// Disable Xcode's "Manage version and build number" during distribution.
+// Upload through Xcode Organizer's App Store Connect distribution method.
 CURRENT_PROJECT_VERSION=2
 
 // Keep signing overrides in a local, ignored file.

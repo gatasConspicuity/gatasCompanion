@@ -55,15 +55,17 @@ or upload script is required.
 4. Open `iosApp/GatasCompanion.xcodeproj`, select the `GatasCompanion` scheme
    and a suitable device destination, and choose **Product > Archive**.
 5. In Xcode Organizer, select the new archive and check its version and build
-   number. Choose **Distribute App** > **Custom** > **App Store Connect** >
-   **Upload**. Disable **Manage version and build number** to preserve the
-   committed number. Automatic signing can remain enabled; it is independent
-   of build-number management.
+   number. Choose **Distribute App** > **App Store Connect** > **Upload**. The
+   archive already contains the build number manually increased before
+   archiving. Automatic signing can remain enabled; it is independent of
+   build-number management.
 6. Before confirming the upload, verify that the distribution summary uses the
    selected build number. After processing, confirm the same number in App Store
    Connect and record it with the version, full source commit and branch.
-7. Add English testing instructions and the source commit to the build's
-   **What to Test** information, then manage tester groups in App Store Connect.
+7. Add testing instructions for your testers to the build's **What to Test**
+   information, then manage tester groups in App Store Connect. For builds
+   distributed by the GATAS Companion team, also follow the
+   [internal TestFlight notes convention](#internal-testflight-notes).
 
 Changing `CURRENT_PROJECT_VERSION` only affects subsequent builds. An existing
 archive retains its original number, so create a new archive after a manual
@@ -74,8 +76,7 @@ This workflow uses manual numbering because Xcode 27 uploaded build `1` unchange
 with **Manage version and build number** enabled and App Store Connect rejected
 it as **Redundant Binary Upload** (error `90189`). The standalone **Validate App**
 flow failed with the same number. The cause of the missing automatic adjustment
-has not been established; a different distribution entry point is not a
-verified fix.
+has not been established.
 
 The visible app version remains a deliberate release choice. Its central
 setting is `MARKETING_VERSION` in `iosApp/Configuration/Config.xcconfig`.
@@ -86,7 +87,11 @@ supplies `CFBundleVersion`. Keep it consistent across the three Apple targets
 and across branches used for uploads. The uploaded number should match the
 committed source configuration and the archive.
 
-## TestFlight Notes
+## Internal TestFlight Notes
+
+For builds distributed by the GATAS Companion team, include the full source
+commit and an English change summary in **What to Test** so testers can identify
+the tested revision.
 
 Before archiving, obtain the full commit and latest change summary from the
 intended revision:
@@ -116,4 +121,5 @@ Keep automated build results separate from physical device acceptance.
 - [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow)
 - [Apple: Preparing Your App for Distribution](https://developer.apple.com/documentation/xcode/preparing-your-app-for-distribution)
 - [Apple: Distributing Your App for Beta Testing and Releases](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases)
+- [Apple: Get Started with TestFlight](https://developer.apple.com/videos/play/tech-talks/110343/)
 - [Apple: Choose a Build to Submit](https://developer.apple.com/help/app-store-connect/manage-builds/choose-a-build-to-submit/)
