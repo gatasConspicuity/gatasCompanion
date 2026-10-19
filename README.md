@@ -22,22 +22,70 @@ forwarding. See [Apple Watch setup, architecture and acceptance checks](docs/WAT
 
 ## iOS setup (macOS only)
 
-1. Ensure you have Apple Developer signing configured in Xcode.
-2. Copy and edit local signing config:
+Use Xcode to build, sign and install the app on your own iPhone:
 
-```bash
-cp iosApp/Configuration/Config.local.xcconfig.example iosApp/Configuration/Config.local.xcconfig
-```
+1. Install Xcode, launch it once to complete its setup, and sign in with your
+   Apple Account in **Xcode > Settings** under the accounts pane. A free Apple
+   Account provides a **Personal Team** for testing on your own devices; a paid
+   Apple Developer Program membership is not required for this local workflow.
+2. From the repository root, create your local signing configuration:
 
-3. Set `TEAM_ID` in `iosApp/Configuration/Config.local.xcconfig`.
-4. Install iPhone deploy helper:
+   ```bash
+   cp iosApp/Configuration/Config.local.xcconfig.example iosApp/Configuration/Config.local.xcconfig
+   ```
 
-```bash
-brew install ios-deploy
-```
+3. Set **both** `TEAM_ID` and `BUNDLE_ID` in
+   `iosApp/Configuration/Config.local.xcconfig`:
 
-5. Open `iosApp/GatasCompanion.xcodeproj` in Xcode. Select the **GatasCompanion**
-   scheme for the iPhone app or **GatasWatchApp** for the paired Watch app.
+   ```text
+   TEAM_ID=YOUR_TEAM_ID_HERE
+   BUNDLE_ID=com.yourname.gatascompanion
+   ```
+
+   Use your signing team's ID from your Xcode account details and replace
+   `yourname` with your own unique value. Bundle IDs registered with Apple must
+   be unique: an ID already owned by another team cannot be registered for your
+   team. For a personal build, replace the repository's default `BUNDLE_ID` with
+   your own. The Watch app and Live Activity extension automatically derive
+   their IDs from this value.
+
+   The shared configuration in `iosApp/Configuration/Config.xcconfig` includes
+   `Config.local.xcconfig`, so Xcode reads your local values automatically.
+   Make shared configuration changes in `iosApp/Configuration/Config.xcconfig`;
+   keep personal `TEAM_ID` and `BUNDLE_ID` overrides in
+   `iosApp/Configuration/Config.local.xcconfig`, which is ignored by Git.
+4. Open `iosApp/GatasCompanion.xcodeproj` in Xcode and select the
+   **GatasCompanion** scheme. Automatic signing is already configured for the
+   iPhone app, Watch app and Live Activity extension. **Do not edit the Team or
+   Bundle Identifier fields in Xcode**, including under **Signing & Capabilities**
+   or **Build Settings**. Editing these fields writes overrides into the tracked
+   `iosApp/GatasCompanion.xcodeproj/project.pbxproj` file and can put your private
+   IDs into Git. Change the configuration files described above instead.
+5. Connect your iPhone to the Mac with a cable, unlock it and accept **Trust This
+   Computer** if prompted. Select the connected iPhone as the run destination
+   in Xcode and wait for device preparation to finish.
+6. On the iPhone, enable **Settings > Privacy & Security > Developer Mode**.
+   Restart when prompted, then confirm that you want to enable Developer Mode
+   after the restart. If the option is missing, let Xcode pair with the connected
+   iPhone first.
+7. Choose **Product > Run** (**Command-R**) in Xcode. Accept any device
+   registration prompts. Xcode builds, signs, installs and launches the app on
+   the iPhone.
+
+To install the Watch app, first install the iPhone app as described above. Then
+use the **Watch** app on the paired iPhone, just as you would for other Watch
+apps: open **My Watch > Apps** (or scroll down directly on older iOS versions),
+find **GATAS** under **Available Apps** and tap **Install**. If automatic
+app installation is enabled, the Watch app may already be installed. See
+[Apple's Watch app installation instructions](https://support.apple.com/109023)
+and [Apple Watch setup](docs/WATCH.md).
+
+**Free signing expires after 7 days.** Without a paid Apple Developer Program
+membership, Personal Team provisioning profiles are valid for seven days from
+issuance. After they expire, the installed app can no longer launch. Reconnect
+the iPhone and use **Product > Run** again to rebuild, sign and reinstall it.
+See [Apple's Personal Team limits](https://developer.apple.com/help/account/basics/about-your-developer-account)
+and [Developer Mode instructions](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device).
 
 ## TestFlight builds
 
@@ -92,6 +140,14 @@ $env:ANDROID_KEY_PASSWORD="your_key_pass"
 ```
 
 ## Sign + deploy iPhone from prebuilt archive (macOS only)
+
+The command-line workflows below use `ios-deploy` for device installation. They
+are optional; the Xcode workflow above does not require this helper. If you
+choose to use the scripts, install it separately:
+
+```bash
+brew install ios-deploy
+```
 
 1. Prebuild unsigned archive (once or in CI):
 
