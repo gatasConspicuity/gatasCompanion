@@ -12,6 +12,23 @@
 - These workflow rules do not provide blanket authorization for those actions
   or for deleting branches.
 
+## Pre-push Privacy Review
+
+- Before every push, check the current state of the target remote and review
+  all outgoing commits, changed files and new artifacts for accidentally
+  included private information. Review the full outgoing history, including
+  values added and removed in earlier commits; a clean working tree or a review
+  of only the final diff is not sufficient.
+- Check for personal `TEAM_ID` values, personal bundle IDs, credentials, tokens,
+  API keys, private keys, signing assets, local configuration, logs, screenshots
+  and generated files. Examples must use placeholders for private values.
+- Keep `iosApp/Configuration/Config.local.xcconfig` ignored and untracked.
+  Verify that Xcode project overrides do not contain private signing values.
+- If private information is found, stop the push and resolve the findings
+  throughout the outgoing history before publishing. Do not rewrite already
+  published history without explicit user authorization.
+- Report the review result without printing private values.
+
 ## Branch Workflow
 
 - Use `main` as the shared integration branch. Merging into `main` does not
