@@ -36,20 +36,49 @@ Configuring these remotes does not automatically synchronize the repositories.
 These rules do not authorize automatic commits, pushes, merges, tags, branch
 deletions, or publication without the corresponding user instruction.
 
+## Version and Build Numbers
+
+Use a continuously increasing numeric build counter throughout the app's
+lifetime on each platform. Do not reset it when the visible app version
+changes, and do not use date-based numbering. Normally, select the highest
+used or reserved number plus one for each new build intended for distribution.
+
+| Platform | Visible app version | Internal build counter | Configuration |
+| --- | --- | --- | --- |
+| Android | `versionName` | `versionCode` | `composeApp/build.gradle.kts` |
+| Apple | `MARKETING_VERSION` | `CURRENT_PROJECT_VERSION` | `iosApp/Configuration/Config.xcconfig` |
+
+For example, version `1.0.0` can use builds `7` and `8`; the next version
+`1.1.0` then continues with build `9`. Android and Apple have independent
+counters and do not need matching numbers. The iPhone app, Watch app and
+Live Activity extension share the same Apple build number.
+
+Before selecting a number, check the relevant distribution service across
+all app versions and coordinate numbers reserved by other branches. Existing
+uploaded numbers, including earlier date-based numbers, remain part of that
+history. Local archives or a single branch do not establish the next number.
+
+Android requires increasing `versionCode` values for successive updates.
+iOS allows the build counter to restart for a new marketing version, but
+this project deliberately keeps counting across versions on both platforms.
+This is a project convention, rather than an iOS requirement. Visible
+versions remain deliberate release choices, separate from the counters.
+
 ## Xcode Archives and TestFlight Uploads
 
 Use the existing Xcode workflow for archiving and uploading. No separate build
 or upload script is required.
 
 1. Check out the branch intended for this test build. In App Store Connect,
-   check the highest build number already used for the app version. Coordinate
-   numbers reserved for uploads from other active branches as well; local
-   archives and the current branch alone are not an authoritative counter.
+   check the highest build number already used across all app versions.
+   Coordinate numbers reserved for uploads from other active branches as well;
+   local archives and the current branch alone are not an authoritative counter.
 2. Manually set `CURRENT_PROJECT_VERSION` in
    `iosApp/Configuration/Config.xcconfig` to a higher number, normally the highest
    used or reserved number plus one. Use a numeric counter rather than a date,
-   and do not reset it to `1`. The iPhone app, Watch app and Live Activity
-   extension all inherit this value; do not add target-specific overrides.
+   and keep counting when `MARKETING_VERSION` changes. The iPhone app, Watch
+   app and Live Activity extension all inherit this value; do not add
+   target-specific overrides.
 3. Commit the selected build number and all intended source changes before
    archiving. Record the full source commit and branch for the build.
 4. Open `iosApp/GatasCompanion.xcodeproj`, select the `GatasCompanion` scheme
@@ -119,6 +148,8 @@ Keep automated build results separate from physical device acceptance.
 ## Sources
 
 - [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow)
+- [Android: Version Your App](https://developer.android.com/studio/publish/versioning)
+- [Google Play: Version Codes](https://support.google.com/googleplay/android-developer/answer/17367361?hl=en)
 - [Apple: Preparing Your App for Distribution](https://developer.apple.com/documentation/xcode/preparing-your-app-for-distribution)
 - [Apple: Distributing Your App for Beta Testing and Releases](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases)
 - [Apple: Get Started with TestFlight](https://developer.apple.com/videos/play/tech-talks/110343/)

@@ -183,10 +183,13 @@ access. See
 
 Before each new TestFlight upload, manually increase the shared build number in
 `iosApp/Configuration/Config.xcconfig` above the highest number already used in
-App Store Connect for that app version. Commit the intended source and build
-number, then choose **Product > Archive** with the **GatasCompanion** scheme and
-an iOS device destination selected. In Xcode Organizer, choose **Distribute
-App** > **App Store Connect** > **Upload**. For detailed steps and this project's
+App Store Connect across all marketing versions. Keep counting when the
+marketing version changes. Android follows the same convention with its own
+`versionCode` counter in `composeApp/build.gradle.kts`. Commit the intended
+source and build number, then choose **Product > Archive** with the
+**GatasCompanion** scheme and an iOS device destination selected. In Xcode
+Organizer, choose **Distribute App** > **App Store Connect** > **Upload**.
+For detailed steps and this project's
 internal release conventions, see the
 [development and TestFlight workflow](docs/DEVELOPMENT.md).
 

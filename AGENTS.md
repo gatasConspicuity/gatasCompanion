@@ -63,16 +63,26 @@
   solely for publication is not required.
 - Create distributed builds from a fully committed working tree. Record the
   version, build number, full Git commit, and branch.
+- Use a continuously increasing numeric build counter on each platform:
+  Android `versionCode` and Apple `CURRENT_PROJECT_VERSION`. Do not reset
+  either counter when `versionName` or `MARKETING_VERSION` changes. Track
+  the Android and Apple counters independently; date-based numbering is
+  not part of this workflow.
+- Before each new Android distribution, check the highest `versionCode`
+  already used in Google Play and numbers reserved by other branches.
+  Increase `versionCode` in `composeApp/build.gradle.kts`, normally to the
+  highest used or reserved number plus one.
 - Coordinate Apple build numbers across all branches used for uploads. The
   iPhone app, Watch app, and Live Activity extension must share the same build
   number. The central project configuration is
   `iosApp/Configuration/Config.xcconfig`.
 - Before each new TestFlight upload, check the highest build number already
-  used for the app version in App Store Connect and coordinate numbers reserved
-  by other active branches. Manually set `CURRENT_PROJECT_VERSION` in the shared
-  configuration to a higher number, normally the highest number plus one.
-- Do not reset the build number to `1` or derive the next number from local
-  archives alone. Use a monotonically increasing numeric counter, not a date.
+  used across all app versions in App Store Connect and coordinate numbers
+  reserved by other active branches. Manually set `CURRENT_PROJECT_VERSION`
+  in the shared configuration to a higher number, normally the highest
+  used or reserved number plus one.
+- Do not derive the next build number from local archives alone. Check the
+  distribution service and coordinate reservations before choosing a number.
 - Commit the selected build number with the intended source changes before
   archiving. Changing source configuration does not change an archive that has
   already been created.
