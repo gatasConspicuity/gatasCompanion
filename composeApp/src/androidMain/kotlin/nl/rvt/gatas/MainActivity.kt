@@ -4,8 +4,7 @@ import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.material3.Surface
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dev.icerock.moko.permissions.PermissionsController
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.DefaultRequest
@@ -15,7 +14,6 @@ import io.ktor.http.HttpHeaders.ContentEncoding
 //import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import nl.rvt.gatas.companion.App
 import org.koin.core.component.KoinComponent
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
@@ -62,6 +60,7 @@ val appModule = module {
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         appContext = applicationContext
@@ -92,14 +91,7 @@ class MainActivity : ComponentActivity() {
 //            enterPictureInPictureMode(pictureInPictureParams)
 //        }
 
-        setContent {
-            Surface(
-            ) {
-                App(
-                    permissionsController = permissionsController
-                )
-            }
-        }
+        setGatasContent(permissionsController)
     }
 }
 

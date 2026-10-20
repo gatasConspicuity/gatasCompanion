@@ -2,5 +2,13 @@
     <style name="Theme.GaTasCompanion"  parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <!-- Can customize differently here if needed -->
     </style>
+
+    <style name="Theme.GaTasCompanion.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/gatas_launch_background</item>
+        <!-- The square asset has transparent padding for Android's circular icon mask. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/gatas_splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.GaTasCompanion</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
 </resources>
 

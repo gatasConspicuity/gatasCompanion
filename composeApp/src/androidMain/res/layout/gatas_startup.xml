@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView
+        android:id="@+id/startup_logo"
+        android:layout_width="320dp"
+        android:layout_height="101.25dp"
+        android:layout_gravity="center"
+        android:translationY="-50dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/gatas_launch_logo"
+        android:contentDescription="@string/startup_logo_description" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:translationY="38dp"
+        android:text="@string/startup_loading"
+        android:textColor="#CCFFFFFF"
+        android:textSize="16sp" />
+
+    <ProgressBar
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center"
+        android:translationY="80dp"
+        android:indeterminate="true"
+        android:indeterminateTint="@android:color/white"
+        android:importantForAccessibility="no" />
+</merge>

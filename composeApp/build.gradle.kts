@@ -39,6 +39,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.core.splashscreen)
             implementation(libs.kable)
             implementation(libs.moko.permissions)
             // Location permission is needed only for BLE scanning on older Android versions.

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Foreground alpha mask; the launcher supplies the light/dark theme colors. -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/gatas_app_icon_monochrome"
+    android:gravity="fill" android:filter="true" />

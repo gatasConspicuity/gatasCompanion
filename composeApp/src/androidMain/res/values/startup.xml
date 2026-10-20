@@ -1,0 +1,5 @@
+<resources>
+    <color name="gatas_launch_background">#0B2239</color>
+    <string name="startup_logo_description">GATAS, General Aviation Traffic Awareness System</string>
+    <string name="startup_loading">loading</string>
+</resources>
