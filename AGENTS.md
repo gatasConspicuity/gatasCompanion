@@ -40,8 +40,11 @@
   documented dependency.
 - Do not introduce a permanent `develop` or `testflight` branch unless the user
   chooses a different workflow.
-- Prepare changes for integration through a pull request. Merge into `main`
-  after review, the agreed tests, and the required authorization.
+- Prepare changes for integration through a pull request for traceability.
+  Maintainers may merge their own pull requests after checking the changes,
+  running the agreed tests, and obtaining the required user authorization.
+  Do not require an approving review from another person or an additional
+  environment reviewer for releases. Releases remain manually initiated.
 - `origin` is the team repository at
   `https://github.com/gatasConspicuity/gatasCompanion.git`.
   Keep `fork` as an additional remote for

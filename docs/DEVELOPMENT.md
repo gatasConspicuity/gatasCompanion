@@ -15,12 +15,17 @@ The normal workflow is:
 1. Create a branch from the current `origin/main`.
 2. Develop and commit the changes, and run appropriate automated checks.
 3. Run targeted hardware and TestFlight tests on that branch when needed.
-4. Review the changes through a pull request and merge into `main` after approval.
+4. Record the changes in a pull request. After checking the changes and running
+   the agreed tests, merge into `main` with the required user authorization.
+   Maintainers may merge their own pull requests without another person's
+   approving review.
 5. Perform final testing of the integrated revision from `main`.
 6. Mark the approved release revision with a Git tag and select a suitable
    tested build for App Store review.
 
-A pull request organizes the review; the merge integrates the changes.
+A pull request records the proposed changes; the merge integrates them.
+No approving PR review or additional environment reviewer is mandatory.
+Release workflows are still started manually by a maintainer.
 `main` does not automatically represent the latest App Store release. Identify
 that release by its release tag, Git commit, and approved build number.
 

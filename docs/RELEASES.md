@@ -46,14 +46,17 @@ exact same commit. New unregistered candidates must exceed the known counter.
 
 ## One-time administrator and team setup
 
-The workflows are not usable through **Run workflow** until they are reviewed
-and merged into the repository's default branch. The workflows themselves do
+The workflows are not usable through **Run workflow** until they are merged
+into the repository's default branch. The workflows themselves do
 not run on merge and do not push source changes to `main`.
 
 1. A repository administrator creates environments **android-release** and
    **mobile-publication**, allowing only the `main` branch (no tag or PR refs).
-   Protect `main` with PR review, especially for workflow/script changes.
-   Configure required environment reviewers according to the team's policy.
+   Keep pull requests for traceability without requiring approving reviews.
+   Leave **Required reviewers** disabled in both environments. Maintainers
+   may integrate their own changes and start releases without another person's
+   approval. Required user authorization, automated checks and physical-device
+   acceptance still apply as described in this document.
 2. Check whether an existing project signing key or previously distributed APK
    exists. Keep that key if updates to those installations must remain possible.
    Otherwise, designate two key custodians before generating a permanent project
