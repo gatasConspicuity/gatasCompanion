@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C30000000000000000000002 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C30000000000000000000001 /* PrivacyInfo.xcprivacy */; };
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
@@ -28,6 +27,10 @@
 		B20000000000000000000130 /* WatchViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000068 /* WatchViews.swift */; };
 		B20000000000000000000131 /* CompanionHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000069 /* CompanionHandoff.swift */; };
 		B20000000000000000000132 /* CompanionHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000069 /* CompanionHandoff.swift */; };
+		C30000000000000000000002 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C30000000000000000000001 /* PrivacyInfo.xcprivacy */; };
+		D40000000000000000000002 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D40000000000000000000001 /* LaunchScreen.storyboard */; };
+		E50000000000000000000002 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = E50000000000000000000001 /* AppIcon.icon */; };
+		E50000000000000000000003 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = E50000000000000000000001 /* AppIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,7 +76,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		C30000000000000000000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
@@ -95,6 +97,9 @@
 		B20000000000000000000067 /* GatasWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatasWatchApp.swift; sourceTree = "<group>"; };
 		B20000000000000000000068 /* WatchViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchViews.swift; sourceTree = "<group>"; };
 		B20000000000000000000069 /* CompanionHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionHandoff.swift; sourceTree = "<group>"; };
+		C30000000000000000000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		D40000000000000000000001 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		E50000000000000000000001 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; name = AppIcon.icon; path = "../artwork/app-icon/AppIcon.icon"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +145,7 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
+				E50000000000000000000001 /* AppIcon.icon */,
 				B20000000000000000000008 /* GatasWatchApp */,
 				B20000000000000000000009 /* WatchShared */,
 				AB1DB47929225F7C00F7AF9C /* Configuration */,
@@ -167,6 +173,7 @@
 				7555FF82242A565900829871 /* ContentView.swift */,
 				B20000000000000000000064 /* PhoneWatchSession.swift */,
 				7555FF8C242A565B00829871 /* Info.plist */,
+				D40000000000000000000001 /* LaunchScreen.storyboard */,
 				C30000000000000000000001 /* PrivacyInfo.xcprivacy */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				A10000000000000000000001 /* GatasPropellerLiveActivityAttributes.swift */,
@@ -327,6 +334,8 @@
 				C30000000000000000000002 /* PrivacyInfo.xcprivacy in Resources */,
 				058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */,
 				058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */,
+				D40000000000000000000002 /* LaunchScreen.storyboard in Resources */,
+				E50000000000000000000002 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -342,6 +351,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B20000000000000000000004 /* Assets.xcassets in Resources */,
+				E50000000000000000000003 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

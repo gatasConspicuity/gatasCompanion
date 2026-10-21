@@ -9,7 +9,7 @@ It is a Kotlin Multiplatform app that runs on Android and iOS.
 
 The [phone barometer feature](doc/phone-pressure.md) sends ambient pressure to
 GATAS over Bluetooth as an alternative to an onboard BMP280. On iOS, enable
-**Use phone barometer** in the connected device's **GATAS Settings**. The choice
+**Phone barometer** in the connected device's **GATAS Settings**. The choice
 is saved separately for each Bluetooth device. The feature and its diagnostic
 counters are available in Debug and Release builds on both platforms. Android
 hardware validation remains open for testers.
@@ -18,6 +18,22 @@ The Android app requires Android 7.0 (API 24) or newer. The iOS app requires
 iOS 18 or newer and includes an Apple Watch remote control
 for watchOS 10 or newer. The paired iPhone handles the GATAS connection and traffic
 forwarding. See [Apple Watch setup, architecture and acceptance checks](docs/WATCH.md).
+
+## App navigation
+
+Home shows saved GATAS devices. Use **Find GATAS** to discover another device,
+or select a saved device to start the bridge. **Settings** contains the GDL90
+bridge preference. **About** includes project and license links and the version
+and build number of the installed app.
+
+The connected overview shows the device identity and a compact **Connection
+Info** card. Tap that card to open the detailed connection counters and live
+measurements; **Back** returns to the overview without stopping the bridge.
+Green markers indicate active connections or forwarding, red markers indicate
+waiting or errors, and gray markers identify disabled optional features.
+The bottom action bar stays available throughout the connected area. Use
+**Settings** (gear) for **GATAS Settings**, **Actions** (tools) for supported
+device commands, and the red **STOP** sign to end the bridge and return Home.
 
 ## Build prerequisites
 

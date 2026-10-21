@@ -7,6 +7,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import platform.CoreGraphics.CGRectMake
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLRequest
+import platform.UIKit.UIColor
 import platform.WebKit.WKWebView
 import platform.WebKit.WKWebViewConfiguration
 
@@ -23,6 +24,8 @@ actual fun EmbeddedWebView(
                 frame = CGRectMake(0.0, 0.0, 0.0, 0.0),
                 configuration = WKWebViewConfiguration(),
             ).apply {
+                opaque = false
+                backgroundColor = UIColor.clearColor
                 NSURL.URLWithString(url)?.let { targetUrl ->
                     loadRequest(NSURLRequest.requestWithURL(targetUrl))
                 }
