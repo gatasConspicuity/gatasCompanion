@@ -160,6 +160,23 @@ class AllocationTests(unittest.TestCase):
 
 
 class PublicationTests(unittest.TestCase):
+    def test_missing_tag_uses_reference_lookup_instead_of_commit_lookup(self):
+        github = object.__new__(release.GitHub)
+        def request(path):
+            status = 404 if path.startswith("/git/ref/tags/") else 422
+            raise release.HTTPError("https://api.github.com" + path, status, "Not found", {}, None)
+        with patch.object(github, "request", side_effect=request) as lookup:
+            github.ensure_tag_matches(manifest())
+        lookup.assert_called_once()
+
+    def test_existing_reference_resolution_errors_are_not_treated_as_missing_tags(self):
+        github = object.__new__(release.GitHub)
+        reference = {"object": {"type": "tag", "sha": "b" * 40}}
+        error = release.HTTPError("https://api.github.com/commits/ref", 404, "Not found", {}, None)
+        with patch.object(github, "request", side_effect=[reference, error]):
+            with self.assertRaises(release.HTTPError):
+                github.ensure_tag_matches(manifest())
+
     def test_existing_tag_cannot_point_to_different_code(self):
         github = object.__new__(release.GitHub)
         with patch.object(github, "request", return_value={"sha": "b" * 40}):
