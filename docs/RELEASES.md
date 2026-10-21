@@ -185,9 +185,11 @@ publication status, not a compiler configuration.
 Each release records platform, channel, version, build, full source commit and
 branch. The latest entry in each of the four platform/channel combinations
 contains a refreshed **Current availability** table with publication dates and
-links. A channel without a published build says **Not published**. Old test
-entries remain historical; recording an entry does not monitor later TestFlight
-expiry, invitation revocation or store withdrawal.
+links. A channel without a published ledger entry says **Not recorded**; an
+existing build distributed before this ledger may still be available. For
+example, the existing iOS TestFlight build `1.0.0 (3)` predates this ledger.
+Old test entries remain historical; recording an entry does not monitor later
+TestFlight expiry, invitation revocation or store withdrawal.
 
 All three publication workflows share a concurrency group to avoid concurrent
 allocation/publication races. Numbers reserved outside GitHub still require team
