@@ -65,6 +65,28 @@ running, the activity starts as soon as the app becomes active. If the bridge
 stops before that, no activity is created. Disabling Live Activities in iPhone
 Settings is reported separately.
 
+Stopping the bridge on either device ends and immediately removes the Live
+Activity from the Lock Screen and Dynamic Island. Lifecycle callbacks reach the
+native manager directly, without waiting for the one-second packet timer or a
+Watch snapshot. Ended activities from an earlier app launch are cleaned up too.
+
+An unexpected loss of an established GATAS Bluetooth connection schedules one
+local iOS notification with sound, after a three-second grace period. Repeated
+connection attempts do not send additional alerts; reconnecting or stopping
+cancels a pending alert. A later connection loss can alert again. Initial
+connection failures and disconnects caused by a submitted Restart GATAS or USB
+firmware-mode command do not alert. The bridge continues its normal reconnect
+attempts and keeps its Live Activity while reconnecting.
+
+The iPhone asks for notification permission when a bridge is running and the
+app is in the foreground. For a first start from a locked-phone Watch, open the
+iPhone app once to grant permission. This is independent of Live Activity
+permission and works without a paired Watch or a push server. Notification
+delivery follows the person's iOS notification, Focus and sound settings.
+These alerts require a BLE disconnect callback in the running app process;
+they cannot reliably report a crash, system termination or force quit. Detecting
+that externally would require a server monitor and APNs integration.
+
 The foreground-required/error notice is a Handoff button. After tapping it,
 keep that Watch screen open, unlock the iPhone, open its App Switcher and tap
 the GatasCompanion Handoff banner. The Watch displays these steps after the tap.
@@ -114,6 +136,12 @@ app, grant Bluetooth access and complete any system prompts on the phone first.
   the background. Without one, the Watch explains why the iPhone app must be
   opened. Opening it while the bridge runs starts the activity; stopping first
   must not create one later. Repeat with Live Activities disabled in Settings.
+- Stop from both phone and Watch with the phone locked; the Live Activity must
+  disappear immediately. Interrupt an established BLE connection for more than
+  three seconds; verify a single audible notification and continued reconnect
+  attempts. Recover and interrupt again to verify a new alert. Repeat with a
+  brief interruption, a stop during the grace period, an intentional GATAS
+  restart, USB firmware mode, denied notification permission and no paired Watch.
 - Tap that Watch notice and continue through the iPhone's Handoff banner. Check
   that the running bridge gets its Live Activity, including a cold iPhone-app
   launch. Repeat after stopping the bridge on the phone and with Handoff disabled;

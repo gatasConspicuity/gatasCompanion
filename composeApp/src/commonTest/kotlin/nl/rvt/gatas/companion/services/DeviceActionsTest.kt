@@ -63,6 +63,7 @@ class DeviceActionsTest {
             assertEquals(1, raw(sent.last()).getBuffer()[2].toInt(), client.state.value.toString())
             client.receive(session, response(sent.last(), 1)); runCurrent()
             assertEquals("executing", client.state.value.operation?.phase)
+            assertFalse(client.expectsDisconnect(session))
             assertFalse(client.request(DeviceActionCommand("save-2", DeviceAction.Save, "a", boot)))
             val completed = response(sent.last(), 0, dirty = false)
             client.receive(session, completed); runCurrent()
@@ -191,10 +192,15 @@ class DeviceActionsTest {
             advanceTimeBy(250); runCurrent()
             client.receive(first, response(sent.last(), 0)); runCurrent()
             client.request(DeviceActionCommand("restart-1", DeviceAction.Restart, "a", boot)); runCurrent()
+            assertFalse(client.expectsDisconnect(first))
             client.receive(first, response(sent.last(), 1)); runCurrent()
+            assertTrue(client.expectsDisconnect(first))
+            assertFalse(client.expectsDisconnect(Any()))
             client.disconnected(first)
+            assertFalse(client.expectsDisconnect(first))
             val second = Any()
             client.connected(second) { sent += it; true }
+            assertFalse(client.expectsDisconnect(second))
             advanceTimeBy(250); runCurrent()
             client.receive(second, response(sent.last(), 0)); runCurrent()
             assertEquals("restarting", client.state.value.operation?.phase)
@@ -239,16 +245,39 @@ class DeviceActionsTest {
             client.receive(session, response(sent.last(), 5)); runCurrent()
             assertEquals("failed", client.state.value.operation?.phase)
             assertTrue(client.state.value.operation?.message?.contains("Firmware mode was not started") == true)
+            assertFalse(client.expectsDisconnect(session))
             assertFalse(client.disconnected(session))
             client.connected(session) { sent += it; true }
             advanceTimeBy(250); runCurrent()
             client.receive(session, response(sent.last(), 0)); runCurrent()
             assertTrue(client.request(DeviceActionCommand("usb-unsaved", DeviceAction.UsbBoot, "a", boot, DeviceUpdatePolicy.AllowUnsaved)))
             runCurrent()
+            assertFalse(client.expectsDisconnect(session))
             client.receive(session, response(sent.last(), 1)); runCurrent()
             assertEquals(2, raw(sent.last()).getBuffer().last().toInt())
+            assertTrue(client.expectsDisconnect(session))
             assertTrue(client.disconnected(session)); runCurrent()
             assertEquals("requested", client.state.value.operation?.phase)
+        } finally { Dispatchers.resetMain() }
+    }
+
+    @Test fun confirmedUsbModeStillExpectsTheFollowingDisconnect() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            val sent = mutableListOf<ByteArray>()
+            val client = DeviceActionClient(backgroundScope)
+            val session = Any()
+            client.connected(session) { sent += it; true }
+            advanceTimeBy(250); runCurrent()
+            client.receive(session, response(sent.last(), 0)); runCurrent()
+            assertTrue(client.request(DeviceActionCommand("usb-confirmed", DeviceAction.UsbBoot, "a", boot)))
+            runCurrent()
+            client.receive(session, response(sent.last(), 1)); runCurrent()
+            client.receive(session, response(sent.last(), 0)); runCurrent()
+            assertEquals("requested", client.state.value.operation?.phase)
+            assertTrue(client.expectsDisconnect(session))
+            assertTrue(client.disconnected(session))
+            assertFalse(client.expectsDisconnect(session))
         } finally { Dispatchers.resetMain() }
     }
 

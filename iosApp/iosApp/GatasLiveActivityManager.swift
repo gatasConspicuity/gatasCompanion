@@ -18,6 +18,8 @@ final class GatasLiveActivityManager: NSObject {
     private var syncTask: Task<Void, Never>?
     private var syncRequested = false
     private var startFailed = false
+    private var started = false
+    private let notifications = GatasBridgeNotifications()
 
     private override init() { super.init() }
 
@@ -51,17 +53,24 @@ final class GatasLiveActivityManager: NSObject {
     }
 
     func start() {
-        guard loopTask == nil else { return }
+        guard !started else { return }
+        started = true
+        GatasLiveActivityBridge.shared.observeState { [weak self] in
+            Task { @MainActor in
+                self?.notifications.synchronize()
+                self?.synchronize()
+            }
+        }
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(applicationDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification, object: nil
+        )
         guard UIDevice.current.userInterfaceIdiom == .phone else { return }
         // Background launches must recover an existing activity before a Watch
         // command arrives, even if SwiftUI never creates the phone's root view.
         let existingActivities = Activity<GatasPropellerLiveActivityAttributes>.activities
         activity = existingActivities.first { $0.activityState == .active || $0.activityState == .stale }
         endDuplicateActivities(existingActivities.filter { $0.id != activity?.id })
-        NotificationCenter.default.addObserver(
-            self, selector: #selector(applicationDidBecomeActive),
-            name: UIApplication.didBecomeActiveNotification, object: nil
-        )
         synchronize()
         loopTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -77,6 +86,7 @@ final class GatasLiveActivityManager: NSObject {
         // Catch up immediately when the person brings the app to the foreground,
         // and permit one new attempt if an earlier foreground request failed.
         startFailed = false
+        notifications.synchronize()
         synchronize()
     }
 
@@ -162,7 +172,7 @@ final class GatasLiveActivityManager: NSObject {
         )
         let content = ActivityContent(state: contentState, staleDate: nil)
 
-        await activity.end(content, dismissalPolicy: .default)
+        await activity.end(content, dismissalPolicy: .immediate)
         self.activity = nil
     }
 

@@ -1,27 +1,56 @@
 package nl.rvt.gatas.companion.liveactivity
 
 import platform.Foundation.NSLock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 actual object GatasLiveActivityBridge {
     private val lock = NSLock()
 
-    private var bridgeRunning: Boolean = false
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var lifecycle = BridgeLifecycleState()
+    // Registered once by the process-owned native manager, on Main.
+    private var stateObserver: (() -> Unit)? = null
     private var pendingPackets: Int = 0
     private var rotationDegreesValue: Int = 0
 
     actual fun setBridgeRunning(running: Boolean) {
         lock.withLock {
-            bridgeRunning = running
+            lifecycle = lifecycle.withRunning(running)
             if (!running) {
                 pendingPackets = 0
                 rotationDegreesValue = 0
             }
         }
+        stateChanged()
+    }
+
+    actual fun setBluetoothConnected(connected: Boolean, expectedDisconnect: Boolean) {
+        lock.withLock {
+            lifecycle = lifecycle.withBluetoothConnected(connected, expectedDisconnect)
+        }
+        stateChanged()
+    }
+
+    fun lifecycleState(): BridgeLifecycleState = lock.withLock { lifecycle }
+
+    fun observeState(observer: () -> Unit) {
+        stateObserver = observer
+        stateChanged()
+    }
+
+    private fun stateChanged() {
+        // Lifecycle changes must wake native handling directly. A timer may not
+        // run after a background stop. Read the latest state in the observer;
+        // the monotonic counter preserves losses even across a quick reconnect.
+        scope.launch { stateObserver?.invoke() }
     }
 
     actual fun recordPacket() {
         lock.withLock {
-            if (bridgeRunning) {
+            if (lifecycle.running) {
                 pendingPackets += 1
             }
         }
@@ -29,7 +58,7 @@ actual object GatasLiveActivityBridge {
 
     actual fun consumeRotationTick(): Boolean =
         lock.withLock {
-            if (!bridgeRunning || pendingPackets <= 0) {
+            if (!lifecycle.running || pendingPackets <= 0) {
                 return@withLock false
             }
 
@@ -39,17 +68,18 @@ actual object GatasLiveActivityBridge {
         }
 
     actual fun isBridgeRunning(): Boolean =
-        lock.withLock { bridgeRunning }
+        lock.withLock { lifecycle.running }
 
     actual fun rotationDegrees(): Int =
         lock.withLock { rotationDegreesValue }
 
     actual fun reset() {
         lock.withLock {
-            bridgeRunning = false
+            lifecycle = lifecycle.withRunning(false)
             pendingPackets = 0
             rotationDegreesValue = 0
         }
+        stateChanged()
     }
 
     private inline fun <T> NSLock.withLock(block: () -> T): T {

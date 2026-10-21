@@ -224,11 +224,12 @@ class BlueToothBleService constructor(
                                 lastEvent = "Bluetooth connected, waiting for frames..."
                             )
                         }
+                        GatasLiveActivityBridge.setBluetoothConnected(true, expectedDisconnect = false)
                         connectedPeripheral?.state?.filterIsInstance<State.Disconnected>()
                             ?.first()
                         pressureConnections.value = null
                         val session = deviceSession
-                        val usb = session != null && deviceActions.disconnected(session)
+                        val usb = reportBluetoothDisconnect(session)
                         deviceSession = null
                         if (usb) {
                             withContext(Dispatchers.Main) { stop() }
@@ -252,7 +253,7 @@ class BlueToothBleService constructor(
                     if (e is CancellationException) throw e
                     pressureConnections.value = null
                     val session = deviceSession
-                    val usb = session != null && deviceActions.disconnected(session)
+                    val usb = reportBluetoothDisconnect(session)
                     deviceSession = null
                     // Some BLE stacks report the bootloader disconnect as an
                     // exception rather than a Disconnected state. Both paths
@@ -278,6 +279,13 @@ class BlueToothBleService constructor(
                 delay(RECONNECT_RETRY_DELAY_MILLIS)
             }
         }
+    }
+
+    private suspend fun reportBluetoothDisconnect(session: Any?): Boolean = withContext(Dispatchers.Main) {
+        val expected = session != null && deviceActions.expectsDisconnect(session)
+        val usb = session != null && deviceActions.disconnected(session)
+        GatasLiveActivityBridge.setBluetoothConnected(false, expectedDisconnect = expected)
+        usb
     }
 
     fun stop() {
