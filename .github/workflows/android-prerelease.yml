@@ -50,8 +50,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Install Android SDK components
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
       - name: Test and build unsigned APK
         working-directory: source
         run: ./gradlew :composeApp:testDebugUnitTest :composeApp:testReleaseUnitTest :composeApp:lintRelease :composeApp:assembleRelease --console=plain -Dorg.gradle.jvmargs='-Xmx4g -Dfile.encoding=UTF-8' -Pkotlin.daemon.jvmargs=-Xmx2g
@@ -88,8 +90,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Install signing tools
-        run: sdkmanager 'build-tools;36.0.0'
+      - name: Set up Android signing tools
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: 'build-tools;36.0.0'
       - name: Validate unsigned candidate before accessing the key
         run: python3 tools/releases/release.py verify-apk --manifest release-output/release.json --apk release-output/unsigned.apk --tools "$ANDROID_HOME/build-tools/36.0.0" --expected-commit "$SOURCE_COMMIT"
       - name: Sign using the project key
