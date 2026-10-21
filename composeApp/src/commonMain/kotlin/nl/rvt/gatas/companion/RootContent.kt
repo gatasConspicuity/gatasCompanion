@@ -67,6 +67,7 @@ fun RootContent(modifier: Modifier = Modifier, permissionsController: Permission
                     title = when (screen) {
                         Screen.Landing, Screen.Connected -> null
                         Screen.ConnectionInfo -> "Connection Info"
+                        Screen.GatasDetails -> "GATAS Details"
                         Screen.BlueTooth -> "Find GATAS"
                         Screen.Settings -> "Settings"
                         Screen.About -> "About"
@@ -74,13 +75,27 @@ fun RootContent(modifier: Modifier = Modifier, permissionsController: Permission
                     modifier = Modifier.windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
                     ),
-                    onSettings = if (screen == Screen.Connected) ({ showGatasSettings = true }) else null,
-                    onStop = if (screen == Screen.Connected) ({ CompanionController.stop(); model.landing() }) else null,
-                    onBack = if (screen == Screen.ConnectionInfo || screen == Screen.BlueTooth) model::back else null,
+                    onBack = if (screen == Screen.ConnectionInfo || screen == Screen.GatasDetails || screen == Screen.BlueTooth)
+                        model::back else null,
                 )
             },
             bottomBar = {
-                if (!screen.isConnected) GatasNavigation(screen, model::landing, model::settings, model::about)
+                if (screen.isConnected) {
+                    DeviceActionsMenu(state.bridge, state.activeDevice?.identifier) { onOpenActions ->
+                        Column {
+                            DeviceActionFeedback(state.bridge, Modifier.windowInsetsPadding(
+                                WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                            ).padding(horizontal = 16.dp, vertical = 8.dp))
+                            ConnectedDeviceNavigation(
+                                onSettings = { showGatasSettings = true },
+                                onActions = onOpenActions,
+                                onStop = { CompanionController.stop(); model.landing() },
+                            )
+                        }
+                    }
+                } else {
+                    GatasNavigation(screen, model::landing, model::settings, model::about)
+                }
             },
         ) { innerPadding ->
             Column(Modifier.fillMaxSize().padding(innerPadding).consumeWindowInsets(innerPadding)) {
@@ -103,13 +118,15 @@ fun RootContent(modifier: Modifier = Modifier, permissionsController: Permission
                         )
                         Screen.Settings -> SettingsScreen(state.gdl90Enabled, CompanionController::setGdl90Enabled)
                         Screen.About -> AboutScreen()
-                        Screen.Connected -> ConnectScreen(state, onConnectionInfo = model::connectionInfo)
+                        Screen.Connected -> ConnectScreen(state, onConnectionInfo = model::connectionInfo,
+                            onGatasDetails = model::gatasDetails)
                         Screen.ConnectionInfo -> ConnectionDetailsScreen(state.bridge, state.activeDevice)
+                        Screen.GatasDetails -> model.gatasDetailsId?.let { GatasDetailsScreen(it) }
                     }
                 }
             }
         }
-        if (showGatasSettings && screen == Screen.Connected) {
+        if (showGatasSettings && screen.isConnected) {
             GatasSettingsDialog(state.bridge, state.activeDevice, CompanionController::changeWifiMode,
                 onDismiss = { showGatasSettings = false })
         }

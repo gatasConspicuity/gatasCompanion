@@ -75,4 +75,27 @@ class ConnectionSummaryTest {
                 connectionIndicators(BridgeStatus(bleConnected = true, phonePressure = pressure))[3].state)
         }
     }
+
+    @Test
+    fun udpActivityRequiresAReceivedResponseRatherThanAnAttemptedRequest() {
+        val confirmed = BridgeStatus(udpHealthy = true, framesRelayed = 4, serverActivityTick = 8)
+        val requestStarted = confirmed.copy(serverActivityTick = 9)
+        val responseReceived = requestStarted.copy(framesRelayed = 5, serverActivityTick = 10)
+
+        assertEquals(4, connectionIndicators(confirmed)[1].activityCount)
+        assertEquals(4, connectionIndicators(requestStarted)[1].activityCount)
+        assertEquals(5, connectionIndicators(responseReceived)[1].activityCount)
+    }
+
+    @Test
+    fun pressureActivityRequiresDeliveryRatherThanJustAnotherSensorSample() {
+        val sent = PhonePressureStatus(enabled = true, condition = PressureSensorCondition.Available,
+            samplesReceived = 10, packetsSent = 1)
+        fun activity(pressure: PhonePressureStatus) =
+            connectionIndicators(BridgeStatus(bleConnected = true, phonePressure = pressure))[3].activityCount
+
+        assertEquals(1, activity(sent))
+        assertEquals(1, activity(sent.copy(samplesReceived = 11)))
+        assertEquals(2, activity(sent.copy(samplesReceived = 11, packetsSent = 2)))
+    }
 }

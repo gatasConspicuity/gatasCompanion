@@ -8,21 +8,34 @@ import androidx.compose.runtime.setValue
 class RootStore {
     var screen by mutableStateOf(Screen.Landing)
         private set
+    var gatasDetailsId by mutableStateOf<String?>(null)
+        private set
     private var activeDeviceId: String? = null
 
-    fun landing() { screen = Screen.Landing }
+    private fun navigate(target: Screen) {
+        gatasDetailsId = null
+        screen = target
+    }
+
+    fun landing() { navigate(Screen.Landing) }
     fun connected(device: GaTasDevice) {
-        if (CompanionController.connect(device)) screen = Screen.Connected
+        if (CompanionController.connect(device)) showConnected()
     }
-    fun showConnected() { screen = Screen.Connected }
+    fun showConnected() { navigate(Screen.Connected) }
     fun connectionInfo() {
-        if (screen.isConnected) screen = Screen.ConnectionInfo
+        if (screen.isConnected) navigate(Screen.ConnectionInfo)
     }
-    fun blueTooth() { screen = Screen.BlueTooth }
-    fun settings() { screen = Screen.Settings }
-    fun about() { screen = Screen.About }
+    fun gatasDetails(hexCode: String) {
+        if (screen.isConnected) {
+            gatasDetailsId = hexCode
+            screen = Screen.GatasDetails
+        }
+    }
+    fun blueTooth() { navigate(Screen.BlueTooth) }
+    fun settings() { navigate(Screen.Settings) }
+    fun about() { navigate(Screen.About) }
     fun back() {
-        screen = if (screen == Screen.ConnectionInfo) Screen.Connected else Screen.Landing
+        if (screen == Screen.ConnectionInfo || screen == Screen.GatasDetails) showConnected() else landing()
     }
 
     fun activeDeviceChanged(identifier: String?) {
@@ -32,8 +45,8 @@ class RootStore {
     }
 
     enum class Screen {
-        Landing, Connected, ConnectionInfo, BlueTooth, Settings, About;
+        Landing, Connected, ConnectionInfo, GatasDetails, BlueTooth, Settings, About;
 
-        val isConnected: Boolean get() = this == Connected || this == ConnectionInfo
+        val isConnected: Boolean get() = this == Connected || this == ConnectionInfo || this == GatasDetails
     }
 }

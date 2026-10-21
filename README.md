@@ -6,7 +6,7 @@ GATAS Companion is the mobile companion app for the GATAS conspicuity device. It
 
 The [phone barometer feature](doc/phone-pressure.md) sends ambient pressure to
 GATAS over Bluetooth as an alternative to an onboard BMP280. On iOS, enable
-**Use phone barometer** in the connected device's **GATAS Settings**. The choice
+**Phone barometer** in the connected device's **GATAS Settings**. The choice
 is saved separately for each Bluetooth device. The feature and its diagnostic
 counters are available in Debug and Release builds on both platforms. Android
 hardware validation remains open for testers.
@@ -27,8 +27,9 @@ Info** card. Tap that card to open the detailed connection counters and live
 measurements; **Back** returns to the overview without stopping the bridge.
 Green markers indicate active connections or forwarding, red markers indicate
 waiting or errors, and gray markers identify disabled optional features.
-Use the gear at the top left for **GATAS Settings**, **Device Actions** for
-supported device commands, and **STOP** at the top right to end the bridge.
+The bottom action bar stays available throughout the connected area. Use
+**Settings** (gear) for **GATAS Settings**, **Actions** (tools) for supported
+device commands, and the red **STOP** sign to end the bridge and return Home.
 
 ## Reality check for cross-platform signing
 

@@ -19,6 +19,7 @@ actual fun EmbeddedWebView(
         modifier = modifier,
         factory = { context ->
             WebView(context).apply {
+                setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT,
