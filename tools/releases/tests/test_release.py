@@ -136,7 +136,7 @@ class AllocationTests(unittest.TestCase):
         items = release.records([entry(manifest(), draft=True)])
         with self.assertRaisesRegex(ValueError, "another source"):
             release.check_allocation(manifest(commit="b" * 40), items)
-        self.assertEqual(release.overview(items).count("Not published"), 4)
+        self.assertEqual(release.overview(items).count("Not recorded"), 4)
 
     def test_corrupt_or_mislabelled_release_fails_closed(self):
         item = entry(manifest())
@@ -156,7 +156,8 @@ class AllocationTests(unittest.TestCase):
         self.assertIn("android | stable | 1.0.0 (30)", text)
         self.assertIn("android | test | 1.1.0 (42)", text)
         self.assertIn("ios | test | 1.1.0 (43)", text)
-        self.assertIn("ios | stable | Not published", text)
+        self.assertIn("ios | stable | Not recorded", text)
+        self.assertNotIn("Not published", text)
 
 
 class PublicationTests(unittest.TestCase):

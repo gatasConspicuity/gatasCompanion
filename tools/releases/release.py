@@ -246,7 +246,7 @@ def overview(existing):
             candidates = [(r, d) for r, d in existing if not r["draft"] and
                           d["platform"] == platform and d["channel"] == channel]
             if not candidates:
-                lines.append(f"| {platform} | {channel} | Not published | — | — | — |")
+                lines.append(f"| {platform} | {channel} | Not recorded | — | — | — |")
                 continue
             release, data = max(candidates, key=lambda pair: pair[1]["build"])
             url = data.get("availability_url") or release["html_url"]
