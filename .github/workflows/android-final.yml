@@ -1,0 +1,49 @@
+name: Android final release
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: Published Android prerelease tag to promote unchanged
+        required: true
+        type: string
+      hardware_tested:
+        description: This exact APK passed GATAS acceptance on physical Android hardware
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-release-publication
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main' && github.repository == 'gatasConspicuity/gatasCompanion'
+    runs-on: ubuntu-24.04
+    environment: mobile-publication
+    permissions:
+      contents: write
+    env:
+      HARDWARE_TESTED: ${{ inputs.hardware_tested }}
+      SOURCE_TAG: ${{ inputs.source_tag }}
+      PROJECT_CERTIFICATE: ${{ vars.ANDROID_CERTIFICATE_SHA256 }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install verification tools
+        run: sdkmanager 'build-tools;36.0.0'
+      - name: Promote the exact tested APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$HARDWARE_TESTED" = true
+          python3 tools/releases/release.py promote --source-tag "$SOURCE_TAG" --tools "$ANDROID_HOME/build-tools/36.0.0" --fingerprint "$PROJECT_CERTIFICATE"

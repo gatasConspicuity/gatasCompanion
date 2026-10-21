@@ -63,34 +63,36 @@
   solely for publication is not required.
 - Create distributed builds from a fully committed working tree. Record the
   version, build number, full Git commit, and branch.
-- Use a continuously increasing numeric build counter on each platform:
-  Android `versionCode` and Apple `CURRENT_PROJECT_VERSION`. Do not reset
-  either counter when `versionName` or `MARKETING_VERSION` changes. Track
-  the Android and Apple counters independently; date-based numbering is
-  not part of this workflow.
-- Before each new Android distribution, check the highest `versionCode`
-  already used in Google Play and numbers reserved by other branches.
-  Increase `versionCode` in `composeApp/build.gradle.kts`, normally to the
-  highest used or reserved number plus one.
-- Coordinate Apple build numbers across all branches used for uploads. The
-  iPhone app, Watch app, and Live Activity extension must share the same build
-  number. The central project configuration is
-  `iosApp/Configuration/Config.xcconfig`.
-- Before each new TestFlight upload, check the highest build number already
-  used across all app versions in App Store Connect and coordinate numbers
-  reserved by other active branches. Manually set `CURRENT_PROJECT_VERSION`
-  in the shared configuration to a higher number, normally the highest
-  used or reserved number plus one.
+- Use the shared product version and continuously increasing lifetime build
+  counter in `Version.xcconfig` for Android, iPhone, Watch and Live Activity.
+  Never reset the counter when the product version changes. Platforms may
+  skip releases; the same version/build pair must identify the same commit.
+- Before preparing a candidate, check App Store Connect across all app
+  versions, Google Play if used, GitHub releases/drafts and reservations on
+  all active branches. Run `python3 tools/releases/release.py prepare
+  --highest-used-or-reserved NUMBER` with the highest verified number.
+  Date-based numbering and platform-specific version overrides are excluded.
+- The bootstrap value in `Version.xcconfig` is not a release reservation.
+  Preparation, a committed candidate and fresh coordination are required
+  before any distribution. Never choose a number from local archives alone.
 - Do not derive the next build number from local archives alone. Check the
   distribution service and coordinate reservations before choosing a number.
 - Commit the selected build number with the intended source changes before
   archiving. Changing source configuration does not change an archive that has
   already been created.
 - Archive through Xcode Organizer and upload using **Distribute App** >
-  **App Store Connect** > **Upload**. Increase the build number manually before
+  **App Store Connect** > **Upload**. Prepare the shared build number before
   archiving as described above. Confirm that the archive, distribution summary
   and uploaded build use the committed number. Automatic signing is a separate
   setting.
+- Test/stable status is independent per platform. Android prereleases are
+  explicitly started GitHub workflows. Stable promotion requires physical
+  Android/GATAS acceptance and reuses the exact tested APK without rebuilding
+  or re-signing. Record iOS availability only after it exists in TestFlight or
+  the App Store. A merge or successful test never authorizes publication.
+- Keep project signing keys outside Git and out of PR/test jobs. Signing uses
+  the protected `android-release` environment; maintain independent encrypted
+  recovery backups with two designated custodians before enabling publication.
 - For TestFlight builds distributed by the GATAS Companion team, include the
   full source commit and an English change summary in "What to Test". Obtain
   them from the intended build revision with

@@ -46,6 +46,21 @@ a system JDK so its Gradle build phase can find Java. See the
 
 ## Android setup (Windows, Linux and macOS)
 
+For ready-to-install APKs, see [GitHub Releases](https://github.com/gatasConspicuity/gatasCompanion/releases).
+The [latest stable Android release](https://github.com/gatasConspicuity/gatasCompanion/releases/latest)
+is the recommended download when available. Releases labelled **Pre-release**
+are test versions. If no stable release has been published, use a prerelease
+only if you want to participate in testing. The current availability table in
+the release notes separates Android/iOS and stable/test builds.
+
+Download the `.apk` attachment on your Android device, open it and allow
+installation from that browser/file manager when Android asks. Future APKs
+signed by the same project key install as updates. A locally signed debug
+installation may need to be removed first; uninstalling deletes its app data.
+Android prevents installation of a lower build number over a newer test build.
+
+To build the app yourself, follow these steps:
+
 Use Android Studio to build and install the app on an Android device:
 
 1. Install [Android Studio](https://developer.android.com/studio/install) for
@@ -197,12 +212,13 @@ Developer Program and an app record in App Store Connect that your account can
 access. See
 [Apple's TestFlight setup](https://developer.apple.com/testflight/).
 
-Before each new TestFlight upload, manually increase the shared build number in
-`iosApp/Configuration/Config.xcconfig` above the highest number already used in
-App Store Connect across all marketing versions. Keep counting when the
-marketing version changes. Android follows the same convention with its own
-`versionCode` counter in `composeApp/build.gradle.kts`. Commit the intended
-source and build number, then choose **Product > Archive** with the
+Before a new distributed candidate, prepare the shared version/build in
+`Version.xcconfig` after checking both distribution services, GitHub releases
+and numbers reserved by other branches. Android and all Apple targets use
+the same counter, which continues across product versions. See the
+[release setup and operating instructions](docs/RELEASES.md) for preparation,
+project signing-key custody, GitHub workflows and stable promotion.
+Commit the intended source and build number, then choose **Product > Archive** with the
 **GatasCompanion** scheme and an iOS device destination selected. In Xcode
 Organizer, choose **Distribute App** > **App Store Connect** > **Upload**.
 For detailed steps and this project's

@@ -1,6 +1,7 @@
 import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -9,6 +10,16 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlin.serialization)
 }
+
+val mobileVersion = Properties().apply {
+    rootProject.file("Version.xcconfig").inputStream().use { load(it) }
+}
+val mobileVersionName = mobileVersion.getProperty("MARKETING_VERSION")
+    ?: error("MARKETING_VERSION is missing from Version.xcconfig")
+val mobileBuildNumber = mobileVersion.getProperty("CURRENT_PROJECT_VERSION")?.toIntOrNull()
+    ?: error("CURRENT_PROJECT_VERSION must be an integer in Version.xcconfig")
+require(mobileVersionName.matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+")))
+require(mobileBuildNumber in 1..2_100_000_000)
 
 kotlin {
     compilerOptions {
@@ -109,8 +120,8 @@ android {
         applicationId = "nl.rvt.gatas"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = mobileBuildNumber
+        versionName = mobileVersionName
     }
     packaging {
         resources {

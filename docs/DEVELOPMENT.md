@@ -36,85 +36,62 @@ Configuring these remotes does not automatically synchronize the repositories.
 These rules do not authorize automatic commits, pushes, merges, tags, branch
 deletions, or publication without the corresponding user instruction.
 
-## Version and Build Numbers
+## Shared Version and Build Numbers
 
-Use a continuously increasing numeric build counter throughout the app's
-lifetime on each platform. Do not reset it when the visible app version
-changes, and do not use date-based numbering. Normally, select the highest
-used or reserved number plus one for each new build intended for distribution.
+`Version.xcconfig` is the only source for the visible product version and the
+continuously increasing build counter. Android reads the same values as the
+iPhone app, Watch app and Live Activity extension. Do not add target-specific,
+Gradle or local-signing version overrides. Never reset the counter when the
+product version changes, and do not use date-based numbering.
 
-| Platform | Visible app version | Internal build counter | Configuration |
-| --- | --- | --- | --- |
-| Android | `versionName` | `versionCode` | `composeApp/build.gradle.kts` |
-| Apple | `MARKETING_VERSION` | `CURRENT_PROJECT_VERSION` | `iosApp/Configuration/Config.xcconfig` |
+The same version/build identifies the same commit across platforms. Platforms
+may skip releases: common build `40`, iOS-only `41`, then common `42` is valid.
+Test and stable availability are independent for each platform; neither a merge
+nor a successful build implies a publication or final approval.
 
-For example, version `1.0.0` can use builds `7` and `8`; the next version
-`1.1.0` then continues with build `9`. Android and Apple have independent
-counters and do not need matching numbers. The iPhone app, Watch app and
-Live Activity extension share the same Apple build number.
+Before preparing a candidate, check the highest numbers actually used across
+all versions in App Store Connect and Google Play (if used), GitHub releases
+and drafts, and reservations on other active branches. Local archives alone
+are not authoritative. Then prepare a number above the highest checked value:
 
-Before selecting a number, check the relevant distribution service across
-all app versions and coordinate numbers reserved by other branches. Existing
-uploaded numbers, including earlier date-based numbers, remain part of that
-history. Local archives or a single branch do not establish the next number.
+```bash
+python3 tools/releases/release.py prepare --highest-used-or-reserved NUMBER --version 1.1.0
+```
 
-Android requires increasing `versionCode` values for successive updates.
-iOS allows the build counter to restart for a new marketing version, but
-this project deliberately keeps counting across versions on both platforms.
-This is a project convention, rather than an iOS requirement. Visible
-versions remain deliberate release choices, separate from the counters.
+Commit the version and all source changes before archiving/distribution. This
+helper only edits local configuration; it never commits, pushes or publishes.
+The bootstrap value with baseline `-1` is not a release-ready reservation.
 
 ## Xcode Archives and TestFlight Uploads
 
-Use the existing Xcode workflow for archiving and uploading. No separate build
-or upload script is required.
+1. Check out the intended, fully committed candidate. Coordinate numbers as
+   described above; selected feature-branch testing remains possible.
+2. In Xcode, select **GatasCompanion** and an iOS device destination, then
+   **Product > Archive**. Archive preflight verifies a prepared number, the
+   effective version/build and a clean working tree. Local signing values may
+   remain in ignored `Config.local.xcconfig`; version overrides are rejected.
+3. Confirm the archive's version/build in Organizer. Choose **Distribute App** >
+   **App Store Connect** > **Upload**. Keep the committed build number in the
+   distribution summary; automatic signing is independent of version handling.
+4. After processing, confirm the same number in App Store Connect and record
+   the full source commit and branch. Add the English **What to Test** notes
+   described below.
+5. For an integrated candidate from `main`, use **Record iOS release** to record
+   actual TestFlight availability. Record stable availability only after the
+   matching build becomes available in the App Store.
 
-1. Check out the branch intended for this test build. In App Store Connect,
-   check the highest build number already used across all app versions.
-   Coordinate numbers reserved for uploads from other active branches as well;
-   local archives and the current branch alone are not an authoritative counter.
-2. Manually set `CURRENT_PROJECT_VERSION` in
-   `iosApp/Configuration/Config.xcconfig` to a higher number, normally the highest
-   used or reserved number plus one. Use a numeric counter rather than a date,
-   and keep counting when `MARKETING_VERSION` changes. The iPhone app, Watch
-   app and Live Activity extension all inherit this value; do not add
-   target-specific overrides.
-3. Commit the selected build number and all intended source changes before
-   archiving. Record the full source commit and branch for the build.
-4. Open `iosApp/GatasCompanion.xcodeproj`, select the `GatasCompanion` scheme
-   and a suitable device destination, and choose **Product > Archive**.
-5. In Xcode Organizer, select the new archive and check its version and build
-   number. Choose **Distribute App** > **App Store Connect** > **Upload**. The
-   archive already contains the build number manually increased before
-   archiving. Automatic signing can remain enabled; it is independent of
-   build-number management.
-6. Before confirming the upload, verify that the distribution summary uses the
-   selected build number. After processing, confirm the same number in App Store
-   Connect and record it with the version, full source commit and branch.
-7. Add testing instructions for your testers to the build's **What to Test**
-   information, then manage tester groups in App Store Connect. For builds
-   distributed by the GATAS Companion team, also follow the
-   [internal TestFlight notes convention](#internal-testflight-notes).
+Changing configuration does not change an existing archive. Create a new
+archive after preparing a new candidate. Retrying the same unused archive
+need not allocate another number; never reuse an already used number for
+another source revision.
 
-Changing `CURRENT_PROJECT_VERSION` only affects subsequent builds. An existing
-archive retains its original number, so create a new archive after a manual
-increase. A retry of the exact same unused build does not itself require another
-increase; a number App Store Connect reports as already used must be replaced.
+Xcode 27 previously uploaded build `1` unchanged despite **Manage version and
+build number**, producing **Redundant Binary Upload** (`90189`). The cause was
+not established. This workflow deliberately prepares the shared number before
+archiving and verifies that the archive and upload preserve it.
 
-This workflow uses manual numbering because Xcode 27 uploaded build `1` unchanged
-with **Manage version and build number** enabled and App Store Connect rejected
-it as **Redundant Binary Upload** (error `90189`). The standalone **Validate App**
-flow failed with the same number. The cause of the missing automatic adjustment
-has not been established.
-
-The visible app version remains a deliberate release choice. Its central
-setting is `MARKETING_VERSION` in `iosApp/Configuration/Config.xcconfig`.
-Keep the iPhone, Watch, and Live Activity versions consistent.
-
-`CURRENT_PROJECT_VERSION` is the shared manually maintained build number and
-supplies `CFBundleVersion`. Keep it consistent across the three Apple targets
-and across branches used for uploads. The uploaded number should match the
-committed source configuration and the archive.
+For GitHub setup, signing-key custody, Android prereleases, unchanged-APK stable
+promotion and the cross-platform overview, see [Mobile Releases](RELEASES.md).
 
 ## Internal TestFlight Notes
 

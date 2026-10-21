@@ -20,6 +20,12 @@ captures/
 
 # Local machine config
 local.properties
+*.jks
+*.keystore
+*.p12
+release-output/
+__pycache__/
+*.py[cod]
 iosApp/Configuration/Config.local.xcconfig
 
 # iOS / Xcode
