@@ -56,8 +56,11 @@ nor a successful build implies a publication or final approval.
 
 Before preparing a candidate, check the highest numbers actually used across
 all versions in App Store Connect and Google Play (if used), GitHub releases
-and drafts, and reservations on other active branches. Local archives alone
-are not authoritative. Then prepare a number above the highest checked value:
+and drafts, and reservations on other active branches. Exclude only the legacy
+iOS date-based entries covered by the documented
+[one-time numbering migration](RELEASES.md#one-time-numbering-migration).
+Local archives alone are not authoritative. Then prepare a number above the
+highest checked value in the active shared sequence:
 
 ```bash
 python3 tools/releases/release.py prepare --highest-used-or-reserved NUMBER --version 1.1.0

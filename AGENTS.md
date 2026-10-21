@@ -66,10 +66,15 @@
   solely for publication is not required.
 - Create distributed builds from a fully committed working tree. Record the
   version, build number, full Git commit, and branch.
-- Use the shared product version and continuously increasing lifetime build
+- Use the shared product version and continuously increasing build
   counter in `Version.xcconfig` for Android, iPhone, Watch and Live Activity.
   Never reset the counter when the product version changes. Platforms may
   skip releases; the same version/build pair must identify the same commit.
+- The one-time migration documented in `docs/RELEASES.md` excludes legacy
+  iOS-only date-based builds from `26091201` through `26101700` from the new
+  shared sequence. Existing TestFlight build `3` establishes its checked
+  baseline; the first Android candidate is `4`. This exception does not
+  exclude any future build or an Android build from numbering checks.
 - Before preparing a candidate, check App Store Connect across all app
   versions, Google Play if used, GitHub releases/drafts and reservations on
   all active branches. Run `python3 tools/releases/release.py prepare

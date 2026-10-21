@@ -12,16 +12,16 @@ and the checked numbering baseline. Gradle uses the same values for Android
 `versionName` and `versionCode`; all Apple targets inherit them through the
 shared configuration. Local signing files must not override version values.
 
-The initial `1.0.0 (3)` only preserves the existing Apple source configuration.
-Its baseline is deliberately `-1`, so it cannot be distributed by the new
-workflows or archived for distribution. It does **not** establish the next
-available number. Earlier numbers, including historical date-based numbers,
-must be included when checking real distribution history.
+The initial configuration preserved `1.0.0 (3)` with baseline `-1` as a
+bootstrap value, which could not be distributed by the new workflows or
+archived for distribution. A checked numbering baseline is required before
+preparing a distributable candidate.
 
 Before preparing a candidate:
 
 1. Check the highest uploaded number across all app versions in App Store
    Connect and Google Play, if the app has ever been distributed there.
+   Exclude only the historical iOS entries covered by the migration below.
 2. Check GitHub releases/drafts and coordinate all active branches' reserved
    numbers. Record the reservation with the team before archiving.
 3. Substitute that highest verified number for `NUMBER` below. The helper
@@ -43,6 +43,27 @@ followed by iOS-only `41` and then common `42`; Android simply skips `41`.
 Never reuse a build for different code, even under another product version.
 Registered builds can be published later for the other platform from the
 exact same commit. New unregistered candidates must exceed the known counter.
+
+### One-time numbering migration
+
+On 2026-10-21, the maintainer confirmed that the old date-based builds, from
+`26091201` through `26101700`, were distributed only on iOS. No Android
+date-based builds were distributed. Those historical iOS entries are excluded
+from the new shared sequence as a one-time migration; their existing binaries
+and source identities remain historical records.
+
+The current TestFlight build is `1.0.0 (3)`, from commit
+`497d1c267fbfce70a65238e54adfcbc090604340`. It remains available unchanged.
+Use `3` as the checked baseline for the first Android candidate, `1.0.0 (4)`.
+Android build `4` belongs to its own prepared source commit; it does not reuse
+the identity of the existing iOS build `3` or require another iOS upload.
+
+This exception applies only to the confirmed legacy iOS date-based entries.
+Count every future upload, draft and reservation normally, and never exclude
+an Android build. In particular, Android cannot update an installation with
+a lower [`versionCode`](https://developer.android.com/studio/publish/versioning).
+Future Apple uploads must also meet App Store Connect's
+actual numbering requirements; this project convention cannot override them.
 
 ## One-time administrator and team setup
 
