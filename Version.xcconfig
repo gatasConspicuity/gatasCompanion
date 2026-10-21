@@ -1,5 +1,5 @@
-// Shared product version and lifetime build counter for all mobile targets.
+// Shared product version and continuously increasing mobile build counter.
 MARKETING_VERSION = 1.0.0
-CURRENT_PROJECT_VERSION = 3
-// Bootstrap only: prepare a new candidate after checking both distribution services.
-GATAS_RELEASE_BASELINE = -1
+CURRENT_PROJECT_VERSION = 4
+// Highest checked number in the active shared sequence; see docs/RELEASES.md.
+GATAS_RELEASE_BASELINE = 3

@@ -86,9 +86,9 @@ def prepare(root, highest, version=None):
     if tuple(map(int, version.split("."))) < tuple(map(int, values[FIELDS[0]].split("."))):
         raise ValueError("Product versions must not decrease")
     (Path(root) / "Version.xcconfig").write_text(
-        "// Shared product version and lifetime build counter for all mobile targets.\n"
+        "// Shared product version and continuously increasing mobile build counter.\n"
         f"MARKETING_VERSION = {version}\nCURRENT_PROJECT_VERSION = {build}\n"
-        "// Highest number checked in both services and reserved by other branches.\n"
+        "// Highest checked number in the active shared sequence; see docs/RELEASES.md.\n"
         f"GATAS_RELEASE_BASELINE = {highest}\n")
     return build
 
