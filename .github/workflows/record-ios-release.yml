@@ -1,0 +1,62 @@
+name: Record iOS release
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Full source commit of the uploaded build from main
+        required: true
+        type: string
+      channel:
+        description: Actual distribution channel
+        required: true
+        type: choice
+        options: [test, stable]
+      url:
+        description: Public TestFlight link (optional) or App Store link (required for stable)
+        required: false
+        type: string
+      availability_confirmed:
+        description: Version, build and source match and the build is actually available in this channel
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-release-publication
+  cancel-in-progress: false
+
+jobs:
+  record:
+    if: github.ref == 'refs/heads/main' && github.repository == 'gatasConspicuity/gatasCompanion'
+    runs-on: ubuntu-24.04
+    environment: mobile-publication
+    permissions:
+      contents: write
+    env:
+      SOURCE_COMMIT: ${{ inputs.commit }}
+      CHANNEL: ${{ inputs.channel }}
+      PUBLIC_URL: ${{ inputs.url }}
+      AVAILABILITY_CONFIRMED: ${{ inputs.availability_confirmed }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          path: automation
+          persist-credentials: false
+      - name: Validate confirmation
+        run: |
+          test "$AVAILABILITY_CONFIRMED" = true
+          [[ "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+      - name: Record confirmed availability
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 automation/tools/releases/release.py --repo source record-ios --channel "$CHANNEL" --url "$PUBLIC_URL"

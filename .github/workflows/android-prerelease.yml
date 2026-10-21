@@ -1,0 +1,122 @@
+name: Android prerelease
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Full source commit from main (prepared and committed candidate)
+        required: true
+        type: string
+      numbers_checked:
+        description: Used numbers and reservations checked across both platforms
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-release-publication
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main' && github.repository == 'gatasConspicuity/gatasCompanion'
+    runs-on: ubuntu-24.04
+    env:
+      SOURCE_COMMIT: ${{ inputs.commit }}
+      NUMBERS_CHECKED: ${{ inputs.numbers_checked }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          path: automation
+          persist-credentials: false
+      - name: Validate explicit release request
+        run: |
+          test "$NUMBERS_CHECKED" = true
+          [[ "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+      - name: Validate candidate and existing allocations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 automation/tools/releases/release.py --repo source candidate --output release-output/release.json
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android SDK components
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+      - name: Test and build unsigned APK
+        working-directory: source
+        run: ./gradlew :composeApp:testDebugUnitTest :composeApp:testReleaseUnitTest :composeApp:lintRelease :composeApp:assembleRelease --console=plain -Dorg.gradle.jvmargs='-Xmx4g -Dfile.encoding=UTF-8' -Pkotlin.daemon.jvmargs=-Xmx2g
+      - name: Check APK metadata and stage artifact
+        run: |
+          python3 automation/tools/releases/release.py verify-apk --manifest release-output/release.json --apk source/composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk --tools "$ANDROID_HOME/build-tools/36.0.0" --expected-commit "$SOURCE_COMMIT"
+          cp source/composeApp/build/outputs/apk/release/composeApp-release-unsigned.apk release-output/unsigned.apk
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: unsigned-android-candidate
+          path: release-output/
+          retention-days: 7
+          if-no-files-found: error
+
+  sign-and-publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: android-release
+    permissions:
+      contents: write
+    env:
+      SOURCE_COMMIT: ${{ inputs.commit }}
+      PROJECT_CERTIFICATE: ${{ vars.ANDROID_CERTIFICATE_SHA256 }}
+      RELEASE_READY: ${{ vars.ANDROID_RELEASE_READY }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: unsigned-android-candidate
+          path: release-output
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install signing tools
+        run: sdkmanager 'build-tools;36.0.0'
+      - name: Validate unsigned candidate before accessing the key
+        run: python3 tools/releases/release.py verify-apk --manifest release-output/release.json --apk release-output/unsigned.apk --tools "$ANDROID_HOME/build-tools/36.0.0" --expected-commit "$SOURCE_COMMIT"
+      - name: Sign using the project key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test "$RELEASE_READY" = true
+          test -n "$PROJECT_CERTIFICATE"
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          umask 077
+          keystore_path="$RUNNER_TEMP/gatas-release.jks"
+          trap 'rm -f "$keystore_path"' EXIT
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -p -f 4 release-output/unsigned.apk "$RUNNER_TEMP/aligned.apk"
+          signed_name=$(python3 -c 'import json; d=json.load(open("release-output/release.json")); print("GatasCompanion-{}-{}.apk".format(d["version"],d["build"]))')
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign --ks "$keystore_path" --ks-pass env:ANDROID_KEYSTORE_PASSWORD --key-pass env:ANDROID_KEY_PASSWORD --ks-key-alias "$ANDROID_KEY_ALIAS" --out "release-output/$signed_name" "$RUNNER_TEMP/aligned.apk"
+          rm release-output/unsigned.apk
+      - name: Verify identity and signature, then publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          signed_name=$(python3 -c 'import json; d=json.load(open("release-output/release.json")); print("GatasCompanion-{}-{}.apk".format(d["version"],d["build"]))')
+          python3 tools/releases/release.py publish --manifest release-output/release.json --apk "release-output/$signed_name" --tools "$ANDROID_HOME/build-tools/36.0.0" --fingerprint "$PROJECT_CERTIFICATE" --expected-commit "$SOURCE_COMMIT"
