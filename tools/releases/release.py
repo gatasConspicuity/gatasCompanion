@@ -182,11 +182,12 @@ class GitHub:
     def ensure_tag_matches(self, data):
         reference = quote("refs/tags/" + tag_for(data), safe="")
         try:
-            commit = self.request("/commits/" + reference)
+            self.request("/git/ref/" + quote("tags/" + tag_for(data), safe="/"))
         except HTTPError as error:
             if error.code == 404:
                 return
             raise
+        commit = self.request("/commits/" + reference)
         if commit.get("sha") != data["commit"]:
             raise ValueError("Existing Git tag points to another source revision")
 
